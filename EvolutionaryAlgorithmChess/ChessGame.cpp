@@ -54,9 +54,9 @@ player getPieceColor(chessPiece piece) {
 }
 
 
-void makeMove(std::vector<board> &moves,board brd, boardCoords coords, chessPiece piece) {
+board makeMove(board brd, boardCoords coords, chessPiece piece) {
     brd[coords.first][coords.second] = piece;
-    moves.push_back(brd);
+    return brd;
 }
 
 chessPiece makePiece(colorlessChessPiece piece, player whoToPlay) {
@@ -65,10 +65,12 @@ chessPiece makePiece(colorlessChessPiece piece, player whoToPlay) {
         start = 7;
     }
     return (chessPiece)((size_t)piece+start);
-}
+}   
 
-std::vector<board> getPawnMoves(board brd , boardCoords coords, player whoToPlay) {
-    std::vector<board> retVal;
+#define SIMPLE_MOVE(moves, brd, coordsTo, coordsFrom, piece, whoToPlay, moveType) moves.push_back( boardAndPreviousMove{makeMove(brd, coordsTo, makePiece(piece, whoToPlay)), chessMove(moveType,coordsFrom,coordsTo,whoToPlay)})
+
+std::vector<boardAndPreviousMove> getPawnMoves(board brd , boardCoords coords, player whoToPlay) {
+    std::vector<boardAndPreviousMove> moves;
     brd[coords.first][coords.second] = chessPiece::empty;
     board tempBoard = brd;
 
@@ -81,11 +83,15 @@ std::vector<board> getPawnMoves(board brd , boardCoords coords, player whoToPlay
     }
 
     if ((whoToPlay == player::white && coords.first == 1) || (whoToPlay == player::black && coords.first == 6)) {
-        makeMove(retVal,brd, boardCoords(coords.first+up, coords.second), makePiece(colorlessChessPiece::rook, whoToPlay));
-        makeMove(retVal,brd, boardCoords(coords.first + up, coords.second), makePiece(colorlessChessPiece::queen, whoToPlay));
-        makeMove(retVal,brd, boardCoords(coords.first + up, coords.second), makePiece(colorlessChessPiece::bishop, whoToPlay));
-        makeMove(retVal,brd, boardCoords(coords.first + up, coords.second), makePiece(colorlessChessPiece::knight, whoToPlay));
-    }
+         
+        auto tempCoords = boardCoords(coords.first+up, coords.second);
+        if (brd[tempCoords.first][tempCoords.second] == chessPiece::empty) {
+            SIMPLE_MOVE(moves, brd, tempCoords, coords, colorlessChessPiece::rook, whoToPlay, chessMove::promotion);
+            SIMPLE_MOVE(moves, brd, tempCoords, coords, colorlessChessPiece::queen, whoToPlay, chessMove::promotion);
+            SIMPLE_MOVE(moves, brd, tempCoords, coords, colorlessChessPiece::bishop, whoToPlay, chessMove::promotion);
+            SIMPLE_MOVE(moves, brd, tempCoords, coords, colorlessChessPiece::knight, whoToPlay, chessMove::promotion);
+        }
+    } 
 
     
 }
@@ -142,5 +148,13 @@ std::vector<board> ChessGame::getPossibleBoards()
 }
 
 void ChessGame::setCurrentBoard(board brd)
+{
+}
+
+chessMove::chessMove(moveTypes p_moveType, boardCoords p_whereFrom, boardCoords p_whereTo, player p_who):
+    moveType(p_moveType),
+    whereFrom(p_whereFrom),
+    whereTo(p_whereTo),
+    who(p_who)
 {
 }
