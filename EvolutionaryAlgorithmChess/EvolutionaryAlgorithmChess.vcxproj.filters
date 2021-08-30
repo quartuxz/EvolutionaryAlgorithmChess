@@ -21,9 +21,15 @@
     <ClCompile Include="ChessGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TextUIChess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChessGame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextUIChess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

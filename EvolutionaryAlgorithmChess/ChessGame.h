@@ -2,6 +2,7 @@
 
 #include <array>
 #include <vector>
+#include <string>
 
 
 enum class chessPiece : size_t {
@@ -9,7 +10,7 @@ enum class chessPiece : size_t {
 };
 
 enum class colorlessChessPiece : size_t {
-	rook, knight, bishop, king, queen
+	pawn ,rook, knight, bishop, king, queen
 };
 
 typedef std::array<std::array<chessPiece,8>, 8> board;
@@ -25,12 +26,21 @@ enum class player {
 
 struct chessMove {
 	enum moveTypes{
-		doublePawn, castle, normal, capture, promotion
+		doublePawn, castle, normal, capture, promotion, captureAndPromotion, enPassant
 	}moveType;
+
+	enum promotionTypes{
+		notPromotion, toRook, toKnight, toBishop, toQueen
+	}promotionTo = notPromotion;
+
+	colorlessChessPiece initalPiece;
+
 	boardCoords whereFrom;
 	boardCoords whereTo;
 	player who;
-	chessMove(moveTypes p_moveType, boardCoords p_whereFrom, boardCoords p_whereTo, player p_who);
+	chessMove(moveTypes p_moveType, boardCoords p_whereFrom, boardCoords p_whereTo, player p_who, colorlessChessPiece piece);
+
+	std::string getStringRepresentation()const;
 };
 
 typedef std::pair<board, chessMove> boardAndPreviousMove;
@@ -47,7 +57,9 @@ public:
 
 	ChessGame();
 
-	std::vector<board> getPossibleBoards();
-	void setCurrentBoard(board brd);
+	std::vector<boardAndPreviousMove> getPossibleBoards();
+	void setNext(boardAndPreviousMove brdMove);
+
+	board getCurrentBoard()const noexcept;
 };
 

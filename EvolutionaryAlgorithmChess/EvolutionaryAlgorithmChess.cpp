@@ -1,6 +1,13 @@
 #include <iostream>
+#include "TextUIChess.h"
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    TextUIChess chessUI;
+    while (true) {
+        chessUI.showBoard();
+        chessUI.showMoves();
+        chessUI.promptMove();
+    }
+
 }
