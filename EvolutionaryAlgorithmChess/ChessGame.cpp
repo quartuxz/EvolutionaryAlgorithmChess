@@ -5,46 +5,9 @@
 #include <optional>
 
 
-ChessGame::ChessGame()
-{
-    //make starting board
-    for (size_t i = 0; i < 8; i++)
-    {
-        for (size_t o = 0; o < 8; o++)
-        {
-            m_current[i][o] = chessPiece::empty;
-        }
-    }
-
-    m_current[0][0] = chessPiece::blackRook;
-    m_current[0][1] = chessPiece::blackKnight;
-    m_current[0][2] = chessPiece::blackBishop;
-    m_current[0][3] = chessPiece::blackQueen;
-    m_current[0][4] = chessPiece::blackKing;
-    m_current[0][5] = chessPiece::blackBishop;
-    m_current[0][6] = chessPiece::blackKnight;
-    m_current[0][7] = chessPiece::blackRook;
-    for (size_t i = 0; i < 8; i++)
-    {
-        m_current[1][i] = chessPiece::blackPawn;
-    }
 
 
-    m_current[7][0] = chessPiece::whiteRook;
-    m_current[7][1] = chessPiece::whiteKnight;
-    m_current[7][2] = chessPiece::whiteBishop;
-    m_current[7][3] = chessPiece::whiteQueen;
-    m_current[7][4] = chessPiece::whiteKing;
-    m_current[7][5] = chessPiece::whiteBishop;
-    m_current[7][6] = chessPiece::whiteKnight;
-    m_current[7][7] = chessPiece::whiteRook;
 
-    for (size_t i = 0; i < 8; i++)
-    {
-        m_current[6][i] = chessPiece::whitePawn;
-    }
-
-}
 
 player getPieceColor(chessPiece piece) {
     if ((size_t)piece == 0) {
@@ -69,14 +32,14 @@ chessPiece makePiece(colorlessChessPiece piece, player whoToPlay) {
     if (whoToPlay == player::white) {
         start = 7;
     }
-    return (chessPiece)((size_t)piece+start);
+    return (chessPiece)((size_t)piece + start);
 }
 
 
 //NOTE: does not take empty piece
 colorlessChessPiece makeColorlessPiece(chessPiece piece) {
-    
-    
+
+
     switch (piece)
     {
     case chessPiece::empty:
@@ -130,19 +93,18 @@ player flipColor(player who) {
 }
 
 
-
 //get all pawn moves for a given position(and a piece->color therein) in a board.
-std::vector<boardAndPreviousMove> getPawnMoves(board brd, std::optional<chessMove> previousMove , boardCoords coords, player whoToPlay) {
+std::vector<boardAndPreviousMove> getPawnMoves(board brd, std::optional<chessMove> previousMove, boardCoords coords, player whoToPlay) {
     std::vector<boardAndPreviousMove> moves;
     brd[coords.first][coords.second] = chessPiece::empty;
     board tempBoard = brd;
 
-    
+
     int up = -1;
     chessPiece pawn = chessPiece::whitePawn;
     if (whoToPlay == player::black) {
         chessPiece pawn = chessPiece::blackPawn;
-        up *=-1;
+        up *= -1;
     }
 
     auto doubleMoveCoords = boardCoords(coords.first + up * 2, coords.second);
@@ -153,17 +115,17 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, std::optional<chessMov
     //promotion
     //we check if moving forward will result moving into promotion rank
     if (oneUp.first == 0 || coords.first == 7) {
-         
+
 
         if (brd[oneUp.first][oneUp.second] == chessPiece::empty) {
-            PAWN_PROMOTION(moves,brd,oneUp,coords,whoToPlay,chessMove::promotion);
+            PAWN_PROMOTION(moves, brd, oneUp, coords, whoToPlay, chessMove::promotion);
         }
     }
     //normal vertical-forward moves that are not promotion
     else {
 
         if (brd[oneUp.first][oneUp.second] == chessPiece::empty) {
-            SIMPLE_MOVE(moves,brd, oneUp,coords, colorlessChessPiece::pawn, whoToPlay, chessMove::normal);
+            SIMPLE_MOVE(moves, brd, oneUp, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::normal);
         }
 
 
@@ -183,31 +145,31 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, std::optional<chessMov
 
     //we do the diagonal capture moves
     //first we bound check
-    if (coords.second+1 <= 7) {
+    if (coords.second + 1 <= 7) {
         //diagonal to the right
-        auto diagRight = boardCoords(coords.first+up, coords.second+1);
+        auto diagRight = boardCoords(coords.first + up, coords.second + 1);
         auto rightPieceColor = getPieceColor(brd[diagRight.first][diagRight.second]);
         if (rightPieceColor != whoToPlay && rightPieceColor != player::neither) {
             //promotion moves
             if (diagRight.first == 0 || diagRight.first == 7) {
-                PAWN_PROMOTION(moves, brd,diagRight,coords,whoToPlay,chessMove::captureAndPromotion);
+                PAWN_PROMOTION(moves, brd, diagRight, coords, whoToPlay, chessMove::captureAndPromotion);
             }
             else {
-                SIMPLE_MOVE(moves,brd,diagRight,coords,colorlessChessPiece::pawn,whoToPlay,chessMove::capture);
+                SIMPLE_MOVE(moves, brd, diagRight, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
             }
         }
     }
 
-    if ((int)coords.second-1 >= 0) {
+    if ((int)coords.second - 1 >= 0) {
         //diagonal to the left
-        auto diagLeft = boardCoords(coords.first+up,coords.second-1);
+        auto diagLeft = boardCoords(coords.first + up, coords.second - 1);
         auto leftPieceColor = getPieceColor(brd[diagLeft.first][diagLeft.second]);
         if (leftPieceColor != whoToPlay && leftPieceColor != player::neither) {
             if (diagLeft.first == 0 || diagLeft.first == 7) {
                 PAWN_PROMOTION(moves, brd, diagLeft, coords, whoToPlay, chessMove::captureAndPromotion);
             }
             else {
-                SIMPLE_MOVE(moves,brd,diagLeft,coords,colorlessChessPiece::pawn,whoToPlay,chessMove::capture);
+                SIMPLE_MOVE(moves, brd, diagLeft, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
             }
         }
     }
@@ -258,17 +220,17 @@ std::vector<boardAndPreviousMove> getBishopMoves(board brd, boardCoords coords, 
 
     colorlessChessPiece piecePlaying = requestingQueen ? colorlessChessPiece::queen : colorlessChessPiece::bishop;
 
-    for (int x = -1; x < 2; x+=2)
+    for (int x = -1; x < 2; x += 2)
     {
-        for (int y = -1; y < 2; y+=2) {
-            
+        for (int y = -1; y < 2; y += 2) {
+
             for (size_t i = 1; i < 8; i++)
             {
                 //bounds checking
-                BOUNDS_CHECK(coords,x,y,i);
+                BOUNDS_CHECK(coords, x, y, i);
 
                 //next move
-                boardCoords toMove = boardCoords(coords.first + i*x, coords.second + i*y);
+                boardCoords toMove = boardCoords(coords.first + i * x, coords.second + i * y);
 
                 if (brd[toMove.first][toMove.second] == chessPiece::empty) {
                     SIMPLE_MOVE(moves, brd, toMove, coords, piecePlaying, whoToPlay, chessMove::normal);
@@ -294,7 +256,7 @@ std::vector<boardAndPreviousMove> getRookMoves(board brd, boardCoords coords, pl
     brd[coords.first][coords.second] = chessPiece::empty;
 
     colorlessChessPiece piecePlaying = requestingQueen ? colorlessChessPiece::queen : colorlessChessPiece::rook;
-    
+
     for (size_t i = 0; i < 4; i++)
     {
         int x, y;
@@ -302,7 +264,7 @@ std::vector<boardAndPreviousMove> getRookMoves(board brd, boardCoords coords, pl
             x = 0;
             y = 1;
         }
-        else if(i==1) {
+        else if (i == 1) {
             x = -1;
             y = 0;
         }
@@ -321,8 +283,8 @@ std::vector<boardAndPreviousMove> getRookMoves(board brd, boardCoords coords, pl
             BOUNDS_CHECK(coords, x, y, i);
 
             //next move
-            boardCoords toMove = boardCoords(coords.first+ i*x,coords.second+ i*y);
-            
+            boardCoords toMove = boardCoords(coords.first + i * x, coords.second + i * y);
+
 
             if (brd[toMove.first][toMove.second] == chessPiece::empty) {
                 SIMPLE_MOVE(moves, brd, toMove, coords, piecePlaying, whoToPlay, chessMove::normal);
@@ -412,33 +374,63 @@ std::vector<boardAndPreviousMove> getQueenMoves(board brd, boardCoords coords, p
     brd[coords.first][coords.second] = chessPiece::empty;
 
     moves = getBishopMoves(brd, coords, whoToPlay, true);
-    
+
     auto rookMoves = getRookMoves(brd, coords, whoToPlay, true);
 
-    moves.insert(moves.begin(),rookMoves.begin(),rookMoves.end());
+    moves.insert(moves.begin(), rookMoves.begin(), rookMoves.end());
 
     return moves;
 }
 
 std::vector<boardAndPreviousMove> getKingMoves(board brd, boardCoords coords, player whoToPlay) {
-    
+    std::vector<boardAndPreviousMove> moves;
+    brd[coords.first][coords.second] = chessPiece::empty;
+
+
+
+    for (int y = -1; y < 2; y++)
+    {
+        for (int x = -1; x < 2; x++)
+        {
+            //std::cout << "asd" << std::endl;
+            int newY = coords.first + y, newX = coords.second + x;
+            //bounds checking
+            if (newY > 7 || newY < 0 || newX > 7 || newX < 0 || (x == 0 && y == 0)) {
+                continue;
+            }
+
+
+            //
+            boardCoords toMove = boardCoords(newY, newX);
+
+            if (brd[toMove.first][toMove.second] == chessPiece::empty) {
+                SIMPLE_MOVE(moves, brd, toMove, coords, colorlessChessPiece::king, whoToPlay, chessMove::normal);
+            }
+            else if (getPieceColor(brd[coords.first + y][coords.second + x]) == flipColor(whoToPlay)) {
+                SIMPLE_MOVE(moves, brd, toMove, coords, colorlessChessPiece::king, whoToPlay, chessMove::capture);
+            }
+        }
+    }
+
+
+    return moves;
 }
 
-std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
+std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const board& brd, player whoToPlay)
 {
     //calculate all posible boards
 
-    std::vector<boardAndPreviousMove> retval;
+    std::vector<boardAndPreviousMove> allMoves;
 
     for (size_t i = 0; i < 8; i++)
     {
         for (size_t o = 0; o < 8; o++)
         {
-            auto piece = m_current[i][o];
+            auto piece = brd[i][o];
 
             if (piece != chessPiece::empty && getPieceColor(piece) == m_whoToPlay) {
 
-                
+
 
                 auto colorlessPiece = makeColorlessPiece(piece);
                 std::vector<boardAndPreviousMove> pieceMoves;
@@ -446,31 +438,32 @@ std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
                 {
                 case colorlessChessPiece::pawn:
                     if (m_moves.empty()) {
-                        pieceMoves = getPawnMoves(m_current, std::nullopt, boardCoords(i, o), m_whoToPlay);
+                        pieceMoves = getPawnMoves(brd, std::nullopt, boardCoords(i, o), whoToPlay);
                     }
                     else {
-                        pieceMoves = getPawnMoves(m_current, m_moves.back(), boardCoords(i, o), m_whoToPlay);
+                        pieceMoves = getPawnMoves(brd, m_moves.back(), boardCoords(i, o), whoToPlay);
                     }
 
                     break;
                 case colorlessChessPiece::bishop:
-                    pieceMoves = getBishopMoves(m_current,boardCoords(i,o),m_whoToPlay);
+                    pieceMoves = getBishopMoves(brd, boardCoords(i, o), whoToPlay);
                     break;
                 case colorlessChessPiece::rook:
-                    pieceMoves = getRookMoves(m_current, boardCoords(i,o), m_whoToPlay);
+                    pieceMoves = getRookMoves(brd, boardCoords(i, o), whoToPlay);
                     break;
                 case colorlessChessPiece::knight:
-                    pieceMoves = getKnightMoves(m_current, boardCoords(i,o), m_whoToPlay);
+                    pieceMoves = getKnightMoves(brd, boardCoords(i, o), whoToPlay);
                     break;
                 case colorlessChessPiece::queen:
-                    pieceMoves = getQueenMoves(m_current, boardCoords(i,o), m_whoToPlay);
+                    pieceMoves = getQueenMoves(brd, boardCoords(i, o), whoToPlay);
                     break;
                 case colorlessChessPiece::king:
+                    pieceMoves = getKingMoves(brd, boardCoords(i, o), whoToPlay);
                     break;
                 }
 
 
-                retval.insert(retval.end(), pieceMoves.begin(), pieceMoves.end());
+                allMoves.insert(allMoves.end(), pieceMoves.begin(), pieceMoves.end());
             }
 
 
@@ -478,7 +471,88 @@ std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
         }
     }
 
-    return retval;
+    return allMoves;
+}
+
+ChessGame::ChessGame()
+{
+    //make starting board
+    for (size_t i = 0; i < 8; i++)
+    {
+        for (size_t o = 0; o < 8; o++)
+        {
+            m_current[i][o] = chessPiece::empty;
+        }
+    }
+
+    m_current[0][0] = chessPiece::blackRook;
+    m_current[0][1] = chessPiece::blackKnight;
+    m_current[0][2] = chessPiece::blackBishop;
+    m_current[0][3] = chessPiece::blackQueen;
+    m_current[0][4] = chessPiece::blackKing;
+    m_current[0][5] = chessPiece::blackBishop;
+    m_current[0][6] = chessPiece::blackKnight;
+    m_current[0][7] = chessPiece::blackRook;
+    for (size_t i = 0; i < 8; i++)
+    {
+        m_current[1][i] = chessPiece::blackPawn;
+    }
+
+
+    m_current[7][0] = chessPiece::whiteRook;
+    m_current[7][1] = chessPiece::whiteKnight;
+    m_current[7][2] = chessPiece::whiteBishop;
+    m_current[7][3] = chessPiece::whiteQueen;
+    m_current[7][4] = chessPiece::whiteKing;
+    m_current[7][5] = chessPiece::whiteBishop;
+    m_current[7][6] = chessPiece::whiteKnight;
+    m_current[7][7] = chessPiece::whiteRook;
+
+    for (size_t i = 0; i < 8; i++)
+    {
+        m_current[6][i] = chessPiece::whitePawn;
+    }
+
+}
+
+
+bool ChessGame::m_checkWouldCaptureKing(board brd)
+{
+    auto boardsAndMove = m_getPossibleMovesForBoard(brd, flipColor(m_whoToPlay));
+    for (auto x : boardsAndMove) {
+        bool hasKing = false;
+        for (auto col : x.first) {
+            for (auto elem : col) {
+                if (elem == makePiece(colorlessChessPiece::king, m_whoToPlay)) {
+                    hasKing = true;
+                    break;
+                }
+            }
+            if (hasKing) {
+                break;
+            }
+        }
+        if (!hasKing) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
+{
+    auto allMoves = m_getPossibleMovesForBoard(m_current,m_whoToPlay);
+    std::vector<boardAndPreviousMove> vettedMoves;
+
+    for (auto x : allMoves)
+    {
+        if (!m_checkWouldCaptureKing(x.first)) {
+            vettedMoves.push_back(x);
+        }
+    }
+
+    return vettedMoves;
 }
 
 
@@ -544,5 +618,8 @@ std::string chessMove::getStringRepresentation() const
     if (promotionTo != notPromotion) {
         ss << ", promotion to: " << promotionTypesToString[promotionTo];
     }
+
+
+
     return ss.str();
 }

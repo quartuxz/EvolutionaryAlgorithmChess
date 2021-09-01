@@ -26,7 +26,7 @@ void TextUIChess::showBoard()
 				finalStr.push_back('r');
 				break;
 			case chessPiece::blackKnight:
-				finalStr.push_back('k');
+				finalStr.push_back('n');
 				break;
 			case chessPiece::blackBishop:
 				finalStr.push_back('b');
@@ -44,7 +44,7 @@ void TextUIChess::showBoard()
 				finalStr.push_back('R');
 				break;
 			case chessPiece::whiteKnight:
-				finalStr.push_back('K');
+				finalStr.push_back('N');
 				break;
 			case chessPiece::whiteBishop:
 				finalStr.push_back('B');

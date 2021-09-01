@@ -53,6 +53,11 @@ private:
 	//the back is the latest move
 	std::vector<chessMove> m_moves;
 	player m_whoToPlay = player::white;
+
+	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const board &brd, player whoToPlay);
+
+	bool m_checkWouldCaptureKing(board brd);
+
 public:
 
 	ChessGame();
