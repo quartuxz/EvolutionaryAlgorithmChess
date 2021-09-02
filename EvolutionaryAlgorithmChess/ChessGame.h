@@ -26,7 +26,7 @@ enum class player {
 
 struct chessMove {
 	enum moveTypes{
-		doublePawn, castle, normal, capture, promotion, captureAndPromotion, enPassant
+		doublePawn, castle, normal, capture, promotion, captureAndPromotion, enPassant, notAMove
 	}moveType;
 
 	enum promotionTypes{
@@ -39,7 +39,7 @@ struct chessMove {
 	boardCoords whereTo;
 	player who;
 	chessMove(moveTypes p_moveType, boardCoords p_whereFrom, boardCoords p_whereTo, player p_who, colorlessChessPiece piece);
-
+	chessMove();
 	std::string getStringRepresentation()const;
 };
 
@@ -51,12 +51,12 @@ class ChessGame
 private:
 	board m_current;
 	//the back is the latest move
-	std::vector<chessMove> m_moves;
+	std::vector<chessMove> m_moves = {chessMove()};
 	player m_whoToPlay = player::white;
 
-	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const board &brd, player whoToPlay);
+	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const boardAndPreviousMove &brd, player whoToPlay);
 
-	bool m_checkWouldCaptureKing(board brd);
+	bool m_checkWouldCaptureKing(const boardAndPreviousMove &brd);
 
 public:
 
