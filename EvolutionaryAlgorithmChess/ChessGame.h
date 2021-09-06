@@ -60,11 +60,15 @@ class ChessGame
 {
 private:
 	board m_current;
+
+	std::vector<board> m_pastBoards;
+
 	//the back is the latest move
 	std::vector<chessMove> m_moves = {chessMove()};
 	player m_whoToPlay = player::white;
 
 	size_t m_movesWithoutCaptureOrPawnMove = 0;
+	bool m_repeatedPosition = false;
 
 	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const boardAndPreviousMove &brd, player whoToPlay);
 
@@ -72,7 +76,14 @@ private:
 
 public:
 
+
+
+	bool getRepeatedPosition()const noexcept;
+
 	size_t getMovesWithoutCaptureOrPawnMove()const noexcept;
+
+
+
 
 	ChessGame();
 

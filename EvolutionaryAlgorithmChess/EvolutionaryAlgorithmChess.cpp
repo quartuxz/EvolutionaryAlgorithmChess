@@ -17,7 +17,7 @@ int main()
     //std::cout << TextUIChess::getBoardString(flipBoard(game.getCurrentBoard()),TextUIChess::mayusMinus) << std::endl;
 
     Topology top;
-    top.push_back(833);
+    top.push_back(834);
     top.push_back(416);
     top.push_back(208);
     top.push_back(104);
@@ -34,11 +34,14 @@ int main()
     gameCondition temp = gameCondition::tieBy50Moves;
 
     while (temp == gameCondition::tieBy50Moves) {
+        ChessGame *game1 = new ChessGame();
         NeuralNetwork white(top, strat);
         NeuralNetwork black(top, strat);
 
-        temp = matchTwoNNs(&game, &black, &white);
+        temp = matchTwoNNs(game1, &black, &white);
+        
         std::cout << getGameConditionString(temp) << std::endl;
+        delete game1;
     }
 
     NeuralNetwork nn(top, strat);

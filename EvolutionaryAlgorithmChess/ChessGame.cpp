@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <optional>
 
-
+#include <iostream>
 
 
 
@@ -111,7 +111,7 @@ player flipColor(player who) {
 
 //get all pawn moves for a given position(and a piece->color therein) in a board.
 std::vector<boardAndPreviousMove> getPawnMoves(board brd, const chessMove &previousMove, boardCoords coords, player whoToPlay) {
-    std::vector<boardAndPreviousMove> moves;
+    std::vector<boardAndPreviousMove> retval;
     brd[coords.first][coords.second] = chessPiece::empty;
     board tempBoard = brd;
 
@@ -130,34 +130,36 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, const chessMove &previ
 
     //promotion
     //we check if moving forward will result moving into promotion rank
-    if (oneUp.first == 0 || coords.first == 7) {
+    if (oneUp.first == 0 || oneUp.first == 7) {
 
 
         if (brd[oneUp.first][oneUp.second] == chessPiece::empty) {
-            PAWN_PROMOTION(moves, brd, oneUp, coords, whoToPlay, chessMove::promotion);
+            PAWN_PROMOTION(retval, brd, oneUp, coords, whoToPlay, chessMove::promotion);
         }
     }
     //normal vertical-forward moves that are not promotion
     else {
 
         if (brd[oneUp.first][oneUp.second] == chessPiece::empty) {
-            SIMPLE_MOVE(moves, brd, oneUp, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::normal);
+            SIMPLE_MOVE(retval, brd, oneUp, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::normal);
         }
 
 
         if (whoToPlay == player::white && coords.first == 6) {
             if (brd[doubleMoveCoords.first][doubleMoveCoords.second] == chessPiece::empty) {
-                SIMPLE_MOVE(moves, brd, doubleMoveCoords, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::doublePawn);
+                SIMPLE_MOVE(retval, brd, doubleMoveCoords, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::doublePawn);
 
             }
 
         }
         else if (whoToPlay == player::black && coords.first == 1) {
             if (brd[doubleMoveCoords.first][doubleMoveCoords.second] == chessPiece::empty) {
-                SIMPLE_MOVE(moves, brd, doubleMoveCoords, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::doublePawn);
+                SIMPLE_MOVE(retval, brd, doubleMoveCoords, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::doublePawn);
             }
         }
     }
+
+    //return retval;
 
     //we do the diagonal capture moves
     //first we bound check
@@ -168,10 +170,10 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, const chessMove &previ
         if (rightPieceColor != whoToPlay && rightPieceColor != player::neither) {
             //promotion moves
             if (diagRight.first == 0 || diagRight.first == 7) {
-                PAWN_PROMOTION(moves, brd, diagRight, coords, whoToPlay, chessMove::captureAndPromotion);
+                PAWN_PROMOTION(retval, brd, diagRight, coords, whoToPlay, chessMove::captureAndPromotion);
             }
             else {
-                SIMPLE_MOVE(moves, brd, diagRight, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
+                SIMPLE_MOVE(retval, brd, diagRight, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
             }
         }
     }
@@ -182,10 +184,10 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, const chessMove &previ
         auto leftPieceColor = getPieceColor(brd[diagLeft.first][diagLeft.second]);
         if (leftPieceColor != whoToPlay && leftPieceColor != player::neither) {
             if (diagLeft.first == 0 || diagLeft.first == 7) {
-                PAWN_PROMOTION(moves, brd, diagLeft, coords, whoToPlay, chessMove::captureAndPromotion);
+                PAWN_PROMOTION(retval, brd, diagLeft, coords, whoToPlay, chessMove::captureAndPromotion);
             }
             else {
-                SIMPLE_MOVE(moves, brd, diagLeft, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
+                SIMPLE_MOVE(retval, brd, diagLeft, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::capture);
             }
         }
     }
@@ -204,26 +206,26 @@ std::vector<boardAndPreviousMove> getPawnMoves(board brd, const chessMove &previ
                 if (previousMove.whereTo.first == coords.first && previousMove.whereTo.second + 1 == coords.second) {
 
 
-                    SIMPLE_MOVE(moves, brdWithoutCapture, behindLastDoublePawnMove, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::enPassant);
+                    SIMPLE_MOVE(retval, brdWithoutCapture, behindLastDoublePawnMove, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::enPassant);
                 }
 
             }
             //right
             if (previousMove.whereTo.second - 1 >= 0) {
                 if (previousMove.whereTo.first == coords.first && previousMove.whereTo.second - 1 == coords.second) {
-                    SIMPLE_MOVE(moves, brdWithoutCapture, behindLastDoublePawnMove, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::enPassant);
+                    SIMPLE_MOVE(retval, brdWithoutCapture, behindLastDoublePawnMove, coords, colorlessChessPiece::pawn, whoToPlay, chessMove::enPassant);
                 }
             }
 
         }
     }
 
+    //std::cout << retval.size() << std::endl;
 
-
-    return moves;
+    return retval;
 }
 
-#include <iostream>
+
 
 
 #define BOUNDS_CHECK(coordsAt, xMult, yMult, acc) if ((int)coordsAt.first +acc*xMult < 0 || (int)coordsAt.second +acc*yMult < 0 || (int)coordsAt.first +i*xMult > 7 || (int)coordsAt.second +acc*yMult > 7) { break;}
@@ -442,6 +444,9 @@ std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const bo
     {
         for (size_t o = 0; o < 8; o++)
         {
+            if (o > 8 ) {
+                throw "AAA";
+            }
             auto piece = brdAndMove.first[i][o];
 
             if (piece != chessPiece::empty && getPieceColor(piece) == whoToPlay) {
@@ -473,6 +478,10 @@ std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const bo
                     break;
                 }
 
+                if (pieceMoves.size() > 50) {
+                    throw "lol";
+                }
+
 
                 allMoves.insert(allMoves.end(), pieceMoves.begin(), pieceMoves.end());
             }
@@ -483,6 +492,11 @@ std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const bo
     }
 
     return allMoves;
+}
+
+bool ChessGame::getRepeatedPosition() const noexcept
+{
+    return m_repeatedPosition;
 }
 
 size_t ChessGame::getMovesWithoutCaptureOrPawnMove() const noexcept
@@ -601,17 +615,43 @@ std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards(gameCondition *co
 }
 
 
+bool boardsAreTheSame(const board & brd1, const board& brd2) {
+    for (size_t i = 0; i < 8; i++)
+    {
+        for (size_t o = 0; o < 8; o++)
+        {
+            if (brd1[i][o] != brd2[i][o]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 void ChessGame::setNext(boardAndPreviousMove brdMove)
 {
 
     m_moves.push_back(brdMove.second);
+    m_pastBoards.push_back(m_current);
     m_current = brdMove.first;
+
     if (brdMove.second.moveType != chessMove::moveTypes::capture && brdMove.second.initalPiece != colorlessChessPiece::pawn) {
         m_movesWithoutCaptureOrPawnMove++;
     }
     else {
         m_movesWithoutCaptureOrPawnMove = 0;
     }
+
+
+    m_repeatedPosition = false;
+
+    for (auto x: m_pastBoards) {
+        if (boardsAreTheSame(x, m_current)) {
+            m_repeatedPosition = true;
+        }
+    }
+    
     m_whoToPlay = (m_whoToPlay == player::white ? player::black : player::white);
 }
 
@@ -737,4 +777,5 @@ std::vector<double> getNumericRepresentationOfBoard(board brd, player whoToPlay)
 void addExtraInputs(std::vector<double>& pastInputs, ChessGame* game)
 {
     pastInputs.push_back(game->getMovesWithoutCaptureOrPawnMove()/50);
+    pastInputs.push_back(game->getRepeatedPosition()?1:0);
 }
