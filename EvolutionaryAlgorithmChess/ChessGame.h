@@ -5,6 +5,15 @@
 #include <string>
 
 
+
+
+
+enum class gameCondition {
+	playing, tieByStalemate, tieBy50Moves, tieByThreeFoldRepetition, whiteVictory, blackVictory
+};
+
+std::string getGameConditionString(gameCondition condition);
+
 enum class chessPiece : size_t {
 	empty, blackPawn, blackRook, blackKnight, blackBishop,blackKing,blackQueen, whitePawn, whiteRook,whiteKnight,whiteBishop, whiteKing, whiteQueen
 };
@@ -23,6 +32,7 @@ enum class player {
 };
 
 
+player flipColor(player who);
 
 struct chessMove {
 	enum moveTypes{
@@ -54,17 +64,33 @@ private:
 	std::vector<chessMove> m_moves = {chessMove()};
 	player m_whoToPlay = player::white;
 
+	size_t m_movesWithoutCaptureOrPawnMove = 0;
+
 	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const boardAndPreviousMove &brd, player whoToPlay);
 
 	bool m_checkWouldCaptureKing(const boardAndPreviousMove &brd);
 
 public:
 
+	size_t getMovesWithoutCaptureOrPawnMove()const noexcept;
+
 	ChessGame();
 
-	std::vector<boardAndPreviousMove> getPossibleBoards();
+	std::vector<boardAndPreviousMove> getPossibleBoards(gameCondition *condition = nullptr);
 	void setNext(boardAndPreviousMove brdMove);
 
 	board getCurrentBoard()const noexcept;
 };
+
+
+
+board flipBoard(const board &brd);
+
+std::vector<double> getNumericRepresentationOfBoard(board brd, player whoToPlay);
+
+
+void addExtraInputs(std::vector<double> &pastInputs, ChessGame *game);
+
+
+
 

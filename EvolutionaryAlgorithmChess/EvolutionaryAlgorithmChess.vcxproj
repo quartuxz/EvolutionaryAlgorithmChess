@@ -145,11 +145,13 @@
   <ItemGroup>
     <ClCompile Include="ChessGame.cpp" />
     <ClCompile Include="EvolutionaryAlgorithmChess.cpp" />
+    <ClCompile Include="MatchMaker.cpp" />
     <ClCompile Include="NeuralNetwork.cpp" />
     <ClCompile Include="TextUIChess.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChessGame.h" />
+    <ClInclude Include="MatchMaker.h" />
     <ClInclude Include="NeuralNetwork.h" />
     <ClInclude Include="TextUIChess.h" />
   </ItemGroup>

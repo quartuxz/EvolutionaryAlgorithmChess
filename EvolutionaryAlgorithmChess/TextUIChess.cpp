@@ -1,19 +1,26 @@
 #include "TextUIChess.h"
+#include "MatchMaker.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 
-TextUIChess::TextUIChess()
+TextUIChess::TextUIChess(boardDisplayType brdDsp):
+	m_brdDsp(brdDsp)
 {
 
 }
 
-void TextUIChess::showBoard()
+TextUIChess::TextUIChess(NeuralNetwork* adversary,player playerColor, boardDisplayType brdDsp):
+	m_adversary(adversary),
+	m_playingAs(playerColor)
+{
+}
+
+std::string TextUIChess::getBoardString(board brd, boardDisplayType brdDsp)
 {
 	std::string finalStr;
-	auto brd = m_game.getCurrentBoard();
 	for (auto x : brd) {
-		for (auto piece: x) {
+		for (auto piece : x) {
 			switch (piece)
 			{
 			case chessPiece::empty:
@@ -62,31 +69,48 @@ void TextUIChess::showBoard()
 		}
 		finalStr.push_back('\n');
 	}
-	
-	std::cout << finalStr << std::endl;
+
+	return finalStr;
+}
+
+void TextUIChess::showBoard()
+{
+	std::cout << getBoardString(m_game.getCurrentBoard(), m_brdDsp) << std::endl;
+}
+
+std::string TextUIChess::getShowMovesString(const std::vector<boardAndPreviousMove>& moves)
+{
+	std::stringstream ss;
+
+
+
+	for (size_t i = 0; i < moves.size(); i++)
+	{
+
+		ss << i << ".) " << moves[i].second.getStringRepresentation() << '\n';
+	}
+
+	return ss.str();
 }
 
 void TextUIChess::showMoves()
 {
-	std::stringstream ss;
-
-	auto x = m_game.getPossibleBoards();
-
-
-	for (size_t i = 0; i < x.size(); i++)
-	{
-
-		ss << i << ".) " << x[i].second.getStringRepresentation() << '\n';
-	}
-
-	std::cout << ss.str() << std::endl;
+	std::cout << getShowMovesString(m_game.getPossibleBoards()) << std::endl;
 }
 
 void TextUIChess::promptMove()
 {
+	if (m_playingAs == player::black) {
+		makeMoveWithNN(&m_game,m_adversary,player::black);
+	}
 	int moveNumber = 0;
 	std::cout << "enter move to make: ";
 	std::cin >> moveNumber;
 
 	m_game.setNext(m_game.getPossibleBoards()[moveNumber]);
+	if (m_playingAs == player::white) {
+		makeMoveWithNN(&m_game,m_adversary,player::black);
+	}
+
+
 }

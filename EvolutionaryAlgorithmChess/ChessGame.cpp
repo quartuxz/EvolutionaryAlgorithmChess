@@ -88,6 +88,22 @@ colorlessChessPiece makeColorlessPiece(chessPiece piece) {
 
 
 
+
+std::map<gameCondition, std::string> gameConditionToString = {
+    {gameCondition::blackVictory, "black victory"},
+    {gameCondition::whiteVictory, "white victory"},
+    {gameCondition::playing, "playing"},
+    {gameCondition::tieBy50Moves, "tie by 50 moves"},
+    {gameCondition::tieByStalemate, "tie by stalemate"},
+    {gameCondition::tieByThreeFoldRepetition, "tie by three fold repetition"}
+};
+
+
+std::string getGameConditionString(gameCondition condition)
+{
+    return gameConditionToString[condition];
+}
+
 player flipColor(player who) {
     return who == player::white ? player::black : player::white;
 }
@@ -469,6 +485,11 @@ std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const bo
     return allMoves;
 }
 
+size_t ChessGame::getMovesWithoutCaptureOrPawnMove() const noexcept
+{
+    return m_movesWithoutCaptureOrPawnMove;
+}
+
 ChessGame::ChessGame()
 {
     //make starting board
@@ -535,16 +556,44 @@ bool ChessGame::m_checkWouldCaptureKing(const boardAndPreviousMove &brd)
     return false;
 }
 
-std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
+
+std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards(gameCondition *condition)
 {
 
     auto allMoves = m_getPossibleMovesForBoard(boardAndPreviousMove{m_current,m_moves.back()}, m_whoToPlay);
     std::vector<boardAndPreviousMove> vettedMoves;
 
-    for (auto x : allMoves)
-    {
-        if (!m_checkWouldCaptureKing(x)) {
-            vettedMoves.push_back(x);
+    //tie by no legal moves, but no king capture next turn
+    if (allMoves.size() == 0) {
+        if (condition != nullptr) {
+            *condition = gameCondition::tieByStalemate;
+        }
+    }else{
+        for (auto x : allMoves)
+        {
+            if (!m_checkWouldCaptureKing(x)) {
+                vettedMoves.push_back(x);
+            } 
+        }
+
+        //victory by checkmate
+        if (vettedMoves.size() == 0) {
+            if (condition != nullptr) {
+                *condition = (m_whoToPlay == player::white ? gameCondition::blackVictory : gameCondition::whiteVictory);
+            }
+
+        }
+        else if(m_movesWithoutCaptureOrPawnMove > 50) {
+            if (condition != nullptr) {
+                *condition = gameCondition::tieBy50Moves;
+            }
+
+        }
+        else {
+            if (condition != nullptr) {
+                *condition = gameCondition::playing;
+            }
+
         }
     }
 
@@ -554,8 +603,15 @@ std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards()
 
 void ChessGame::setNext(boardAndPreviousMove brdMove)
 {
+
     m_moves.push_back(brdMove.second);
     m_current = brdMove.first;
+    if (brdMove.second.moveType != chessMove::moveTypes::capture && brdMove.second.initalPiece != colorlessChessPiece::pawn) {
+        m_movesWithoutCaptureOrPawnMove++;
+    }
+    else {
+        m_movesWithoutCaptureOrPawnMove = 0;
+    }
     m_whoToPlay = (m_whoToPlay == player::white ? player::black : player::white);
 }
 
@@ -623,4 +679,62 @@ std::string chessMove::getStringRepresentation() const
 
 
     return ss.str();
+}
+
+board flipBoard(const board& brd)
+{
+    //we invert the board
+    board tempBoard;
+    for (size_t rank = 0; rank < 8; rank++)
+    {
+        for (size_t file = 0; file < 8; file++)
+        {
+            tempBoard[rank][file] = brd[7 - rank][file];
+        }
+    }
+    return tempBoard;
+}
+
+//we must provide the same numeric representation regardless of who asks for it. As if colors did not matter and we only needed to know who is friendly and enemy and where is our side of the board.
+std::vector<double> getNumericRepresentationOfBoard(board brd, player whoToPlay)
+{
+
+    if (whoToPlay == player::white) {
+        brd = flipBoard(brd);
+    }
+    
+
+    //we multiply 8*8 which is the amount of squares, there are 6 pieces of two colors, and a posibility of an empty square. so 8*8*6*3
+    //the first number tells wether square (0,0) is empty, the first 6 numbers correspond to the friendly pieces of square (0,0) the next
+    // 6 numbers correspond to the enemy pieces.
+
+    std::vector<double> retval;
+
+    for (size_t rank = 0; rank < 8; rank++)
+    {
+        for (size_t file = 0; file < 8; file++)
+        {
+            retval.push_back(brd[rank][file] == chessPiece::empty);
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::bishop,whoToPlay));
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::king,whoToPlay));
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::knight,whoToPlay));
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::pawn,whoToPlay));
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::queen,whoToPlay));
+            retval.push_back(brd[rank][file] == makePiece(colorlessChessPiece::rook,whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::bishop, whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::king, whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::knight, whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::pawn, whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::queen, whoToPlay));
+            retval.push_back(brd[rank][file] != makePiece(colorlessChessPiece::rook, whoToPlay));
+        }
+    }
+
+
+    return retval;
+}
+
+void addExtraInputs(std::vector<double>& pastInputs, ChessGame* game)
+{
+    pastInputs.push_back(game->getMovesWithoutCaptureOrPawnMove()/50);
 }
