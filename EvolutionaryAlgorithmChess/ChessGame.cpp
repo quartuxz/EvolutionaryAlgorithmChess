@@ -301,7 +301,7 @@ std::vector<boardAndPreviousMove> getRookMoves(board brd, boardCoords coords, pl
             BOUNDS_CHECK(coords, x, y, i);
 
             //next move
-            boardCoords toMove = boardCoords(coords.first + i * x, coords.second + i * y);
+            boardCoords toMove = boardCoords(coords.first +  i * x, coords.second + i * y);
 
 
             if (brd[toMove.first][toMove.second] == chessPiece::empty) {

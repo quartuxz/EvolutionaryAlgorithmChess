@@ -5,8 +5,9 @@
 
 int main()
 {
+    MatchMaker mm(20);
 
-
+    mm.matchMake();
 
 
     //randomizationStrategy::seedEngine();

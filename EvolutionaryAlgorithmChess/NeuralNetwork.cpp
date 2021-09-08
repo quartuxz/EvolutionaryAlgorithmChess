@@ -16,6 +16,13 @@ double generateRandomNumber(const randomizationStrategy::tactic& tac) {
 }
 
 
+void Neuron::addRandomWeights(const randomizationStrategy& randStrat) const noexcept
+{
+	for (auto x : m_synapses) {
+		x.first += generateRandomNumber(randStrat.individual);
+	}
+}
+
 Neuron::Neuron(doubleToDoubleFunc activationFunction):
 	m_activationFunction(activationFunction)
 {
@@ -99,11 +106,23 @@ NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrat
 
 }
 
+void NeuralNetwork::addRandomWeights(const randomizationStrategy& randStrat)
+{
+	m_lock.lock();
+	for (auto layer : m_allLayers) {
+		for (auto neuron : layer)
+		{
+			neuron->addRandomWeights(randStrat);
+		}
+	}
+	m_lock.unlock();
+}
+
 #include <sstream>
 
 std::vector<double> NeuralNetwork::getResult(const std::vector<double>& input) const
 {
-
+	std::lock_guard<std::mutex> lockGuard(m_lock);
 
 	if (m_inputLayer.size() != input.size()) {
 		std::stringstream ss;

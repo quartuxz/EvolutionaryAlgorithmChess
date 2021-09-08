@@ -46,3 +46,217 @@ gameCondition makeMoveWithNN(ChessGame* game, NeuralNetwork* nn, player whoIsPla
 	game->setNext(possibleMoves[chosenMove]);
 	return gameCondition::playing;
 }
+
+MatchMaker::MatchMaker(size_t initialNNs, Topology top):
+	m_initialNNs(initialNNs)
+{
+	randomizationStrategy randStrat;
+	randStrat.individual.maxRangeBeforeTransform = 1;
+	for (size_t i = 0; i < initialNNs; i++) {
+		m_competitors.push_back(std::make_pair(new NeuralNetwork(top,randStrat),0));
+	}
+
+
+}
+
+#include <iostream>
+#include <stack>
+
+
+
+void addScores(std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, size_t blackIndex, size_t whiteIndex, gameCondition cond) {
+	if (cond == gameCondition::blackVictory) {
+		m_competitors[blackIndex].second += 2;
+	}
+	else if (cond == gameCondition::whiteVictory) {
+		m_competitors[whiteIndex].second += 2;
+	}
+	else {
+		m_competitors[blackIndex].second += 1;
+		m_competitors[whiteIndex].second += 1;
+	}
+}
+
+void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, std::mutex &matchesLock) {
+	
+	matchesLock.lock();
+	auto blackNN = m_competitors[blackIndex].first;
+	auto whiteNN = m_competitors[whiteIndex].first;
+	matchesLock.unlock();
+	
+	ChessGame* game = new ChessGame();
+
+	gameCondition cond;
+
+	cond = matchTwoNNs(game, blackNN, blackNN);
+
+	std::cout << std::endl << getGameConditionString(cond);
+
+	matchesLock.lock();
+	addScores(m_competitors,blackIndex,whiteIndex,cond);
+	matchesLock.unlock();
+
+
+	delete game;
+}
+
+
+void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vector<std::pair<NeuralNetwork*, size_t>> &m_competitors, std::mutex &matchesLock, size_t i) {
+	
+	//std::cout << "-";
+	while (true) {
+		size_t blackIndex, whiteIndex;
+		matchesLock.lock();
+		if (matches.empty()) {
+			
+			matchesLock.unlock();
+			break;
+		}
+		else {
+			auto thisMatch = matches.top();
+			blackIndex = thisMatch.first;
+			whiteIndex = thisMatch.second;
+			matches.pop();
+		}
+		matchesLock.unlock();
+
+
+
+		std::cout << " " << i << " " << std::endl;
+
+		//the most computationally intensive operation, takes between 2-5 seconds @4ghz. Possibly can be optimized.
+		gameCondition result;
+		matchMakeThreadedOnce(blackIndex,whiteIndex, m_competitors,matchesLock);
+		//std::cout << "lol" << std::endl;
+	}
+}
+
+
+#include <algorithm>
+#include <chrono>
+
+#define START_CHRONO auto start = std::chrono::high_resolution_clock::now();
+#define END_CHRONO_LOG auto finish = std::chrono::high_resolution_clock::now();\
+						std::cout << std::endl;\
+						std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << std::endl;
+
+void MatchMaker::matchMake()
+{
+
+	using milli = std::chrono::milliseconds;
+
+
+	//first is black and second is white
+	std::vector<std::pair<size_t, size_t>> unorderedMatches;
+	std::vector<std::thread*> workers;
+
+	std::mutex matchesLock;
+
+	for (size_t i = 0; i < m_initialNNs; i++)
+	{
+		for (size_t o = i; o < m_initialNNs; o++) {
+
+			if (i != o) {
+				for (size_t x = 0; x < 2; x++) {
+
+
+
+
+					auto black = x == 0 ? i : o;
+					auto white = x == 0 ? o : i;
+
+
+					unorderedMatches.push_back(std::make_pair(black, white));
+
+
+				}
+			}
+
+		}
+	}
+
+
+	std::stack<std::pair<size_t, size_t>> matches;
+	std::vector<size_t> alreadySelectedNNsIndices;
+
+
+	while (!unorderedMatches.empty()) {
+		bool foundOne = false;
+		for (size_t i = 0; i < unorderedMatches.size(); i++) {
+			auto vecContains = [&alreadySelectedNNsIndices](size_t index) {return std::find(alreadySelectedNNsIndices.begin(), alreadySelectedNNsIndices.end(), index) != alreadySelectedNNsIndices.end(); };
+			if ( !vecContains(unorderedMatches[i].first) && !vecContains(unorderedMatches[i].second)) {
+				alreadySelectedNNsIndices.push_back(unorderedMatches[i].first);
+				alreadySelectedNNsIndices.push_back(unorderedMatches[i].second);
+
+				matches.push(unorderedMatches[i]);
+
+
+				//std::cout << unorderedMatches[i].first << "; " << unorderedMatches[i].second << std::endl;
+
+				unorderedMatches.erase(unorderedMatches.begin() + i);
+				foundOne = true;
+				break;
+			}
+		}
+		if (!foundOne) {
+			std::cout << "finished scheduling!" << std::endl;
+			alreadySelectedNNsIndices.clear();
+
+
+		}
+	}
+
+	START_CHRONO
+
+	for (size_t o = 0; o < m_maxThreads; o++) {
+		//matchMakeThread(matches,m_competitors,matchesLock,competitorsLock);
+		workers.push_back(new std::thread([&, o]() {matchMakeThreaded(matches,m_competitors,matchesLock,o); }));
+	}
+
+	for (size_t i = 0; i < workers.size(); i++) {
+		workers[i]->join();
+		delete workers[i];
+	}
+
+
+
+	END_CHRONO_LOG
+
+	/*
+	auto start = std::chrono::high_resolution_clock::now();
+	matchMakeThreaded(matches, m_competitors, matchesLock, competitorsLock);
+
+	auto finish = std::chrono::high_resolution_clock::now();
+
+	std::cout << std::endl;
+	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << std::endl;
+	*/
+	//return;
+
+
+
+}
+
+void MatchMaker::sort()
+{
+}
+
+NeuralNetwork* MatchMaker::getBest()
+{
+	return m_competitors[0].first;
+}
+
+void MatchMaker::split()
+{
+}
+
+void MatchMaker::regenerate()
+{
+}
+
+MatchMaker::~MatchMaker()
+{
+	for (auto x : m_competitors) {
+		delete x.first;
+	}
+}
