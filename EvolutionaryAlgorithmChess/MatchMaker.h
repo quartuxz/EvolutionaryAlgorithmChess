@@ -27,13 +27,15 @@ public:
 
 	void matchMake();
 
-	void sort();
+	void sortNNs();
 
 	NeuralNetwork* getBest();
 
 	void split();
 
 	void regenerate();
+	
+	std::string serializeMatchMaker()const;
 
 	~MatchMaker();
 

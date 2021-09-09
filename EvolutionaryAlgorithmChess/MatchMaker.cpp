@@ -122,7 +122,7 @@ void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vect
 
 
 
-		std::cout << " " << i << " " << std::endl;
+		//std::cout << " " << i << " " << std::endl;
 
 		//the most computationally intensive operation, takes between 2-5 seconds @4ghz. Possibly can be optimized.
 		gameCondition result;
@@ -199,7 +199,6 @@ void MatchMaker::matchMake()
 			}
 		}
 		if (!foundOne) {
-			std::cout << "finished scheduling!" << std::endl;
 			alreadySelectedNNsIndices.clear();
 
 
@@ -237,8 +236,17 @@ void MatchMaker::matchMake()
 
 }
 
-void MatchMaker::sort()
+#include <algorithm>
+
+
+bool sortBySec(const std::pair<NeuralNetwork*, size_t> &a, const std::pair<NeuralNetwork*, size_t>& b) {
+	return (a.second > b.second);
+}
+
+
+void MatchMaker::sortNNs()
 {
+	std::sort(m_competitors.begin(), m_competitors.end(), sortBySec);
 }
 
 NeuralNetwork* MatchMaker::getBest()
@@ -248,10 +256,44 @@ NeuralNetwork* MatchMaker::getBest()
 
 void MatchMaker::split()
 {
+
+
+	m_competitors.erase(m_competitors.begin()+ m_competitors.size()/2, m_competitors.end());
+
 }
 
 void MatchMaker::regenerate()
 {
+	
+	randomizationStrategy strat;
+	strat.individual.maxRangeBeforeTransform = 0.01;
+
+	size_t initialCompetitorsSize = m_competitors.size();
+
+	for (size_t i = 0; i < initialCompetitorsSize; i++)
+	{
+
+		m_competitors[i].second = 0;
+		NeuralNetwork* newNN;
+
+
+		newNN = new NeuralNetwork(*m_competitors[i].first);
+
+		
+		newNN->addRandomWeights(strat);
+		m_competitors.push_back(std::make_pair(newNN,0));
+
+	}
+	
+}
+
+std::string MatchMaker::serializeMatchMaker() const
+{
+	std::stringstream ss;
+	for (auto nn : m_competitors)
+	{
+		ss << nn.first->serialize() << " *** ";
+	}
 }
 
 MatchMaker::~MatchMaker()

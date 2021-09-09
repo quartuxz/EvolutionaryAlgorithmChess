@@ -34,6 +34,9 @@ private:
 	double m_value;
 	double m_output;
 	doubleToDoubleFunc m_activationFunction;
+
+
+
 public:
 
 
@@ -41,6 +44,13 @@ public:
 
 
 	Neuron(doubleToDoubleFunc activationFunction);
+
+
+	Neuron(doubleToDoubleFunc activationFunction, const std::vector<synapse> &synapses);
+
+
+
+
 	void setOutput(double val);
 	void addValue(double val);
 	double getOutput()const noexcept;
@@ -53,6 +63,9 @@ public:
 	void addSynapse(const synapse &syn);
 
 	void reset();
+
+	std::vector<double> getSynapseWeights()const;
+	void setSynapseWeights(std::vector<double> newWeights);
 };
 
 
@@ -70,6 +83,10 @@ private:
 
 	mutable std::mutex m_lock;
 
+
+	Topology m_top;
+	randomizationStrategy m_generationStrategy;
+	doubleToDoubleFunc m_activationFunction;
 public:
 
 	NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction = [](double in) {return 1 / (1 + exp(-in)); });
@@ -78,6 +95,11 @@ public:
 
 	//sets the input layer to the passed values, pass them through the entire neural net, and get a vector of outputs.
 	std::vector<double> getResult(const std::vector<double> &input)const;
+
+	NeuralNetwork(const NeuralNetwork &other);
+
+
+	std::string serialize()const;
 
 	~NeuralNetwork();
 

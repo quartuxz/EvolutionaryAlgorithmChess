@@ -28,6 +28,13 @@ Neuron::Neuron(doubleToDoubleFunc activationFunction):
 {
 }
 
+Neuron::Neuron(doubleToDoubleFunc activationFunction, const std::vector<synapse> &synapses):
+	m_activationFunction(activationFunction),
+	m_synapses(synapses)
+{
+
+}
+
 void Neuron::setOutput(double val)
 {
 	m_output = val;
@@ -68,12 +75,33 @@ void Neuron::reset()
 	m_output = 0;
 }
 
+std::vector<double> Neuron::getSynapseWeights()const
+{
+	std::vector<double> retval;
+
+	for (auto syn:m_synapses)
+	{
+		retval.push_back(syn.first);
+	}
+
+	return retval;
+}
+
+void Neuron::setSynapseWeights(std::vector<double> newWeights)
+{
+	for (size_t i = 0; i < newWeights.size(); i++) {
+		m_synapses[i].first = newWeights[i];
+	}
+}
+
 #include <iostream>
 
 //we build up the neural network
-NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction)
+NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction):
+	m_top(top),
+	m_generationStrategy(generationStrategy),
+	m_activationFunction(m_activationFunction)
 {
-
 	for (size_t i = 0; i < top.size(); i++)
 	{
 		NeuronLayer layer;
@@ -168,6 +196,35 @@ std::vector<double> NeuralNetwork::getResult(const std::vector<double>& input) c
 	}
 
 	return retval;
+}
+
+NeuralNetwork::NeuralNetwork(const NeuralNetwork& other):
+	NeuralNetwork(other.m_top, other.m_generationStrategy, other.m_activationFunction)
+{
+	for (size_t i = 0; i < m_allLayers.size(); i++) {
+		for (size_t o = 0; o < m_allLayers[i].size(); o++) {
+			m_allLayers[i][o]->setSynapseWeights(other.m_allLayers[i][o]->getSynapseWeights());
+		}
+	}
+}
+
+std::string NeuralNetwork::serialize()const
+{
+	std::stringstream ss;
+
+	for (auto layer : m_allLayers)
+	{
+		for (auto neuron : layer) {
+			auto synapses = neuron->getSynapseWeights();
+			for (auto syn : synapses) {
+				ss << syn << " ";
+			}
+			ss << "/ ";
+		}
+		ss << std::endl;
+	}
+
+	return ss.str();
 }
 
 NeuralNetwork::~NeuralNetwork()
