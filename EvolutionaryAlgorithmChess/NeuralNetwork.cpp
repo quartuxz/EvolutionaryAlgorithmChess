@@ -89,7 +89,7 @@ std::vector<double> Neuron::getSynapseWeights()const
 
 void Neuron::setSynapseWeights(std::vector<double> newWeights)
 {
-	for (size_t i = 0; i < newWeights.size(); i++) {
+	for (size_t i = 0; i < m_synapses.size(); i++) {
 		m_synapses[i].first = newWeights[i];
 	}
 }
@@ -100,7 +100,7 @@ void Neuron::setSynapseWeights(std::vector<double> newWeights)
 NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction):
 	m_top(top),
 	m_generationStrategy(generationStrategy),
-	m_activationFunction(m_activationFunction)
+	m_activationFunction(activationFunction)
 {
 	for (size_t i = 0; i < top.size(); i++)
 	{

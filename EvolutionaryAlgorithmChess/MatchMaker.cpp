@@ -48,14 +48,15 @@ gameCondition makeMoveWithNN(ChessGame* game, NeuralNetwork* nn, player whoIsPla
 }
 
 MatchMaker::MatchMaker(size_t initialNNs, Topology top):
-	m_initialNNs(initialNNs)
+	m_initialNNs(initialNNs),
+	m_top(top)
 {
 	randomizationStrategy randStrat;
 	randStrat.individual.maxRangeBeforeTransform = 1;
 	for (size_t i = 0; i < initialNNs; i++) {
 		m_competitors.push_back(std::make_pair(new NeuralNetwork(top,randStrat),0));
 	}
-
+	m_initialRandStrat = randStrat;
 
 }
 
@@ -88,7 +89,7 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 
 	gameCondition cond;
 
-	cond = matchTwoNNs(game, blackNN, blackNN);
+	cond = matchTwoNNs(game, blackNN, whiteNN);
 
 	std::cout << std::endl << getGameConditionString(cond);
 
@@ -139,6 +140,17 @@ void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vect
 #define END_CHRONO_LOG auto finish = std::chrono::high_resolution_clock::now();\
 						std::cout << std::endl;\
 						std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << std::endl;
+
+std::string MatchMaker::getScoresStrings() const noexcept
+{
+	std::stringstream ss;
+	ss << "scores: " << std::endl;
+	for (auto x : m_competitors)
+	{
+		ss << x.second << std::endl;
+	}
+	return ss.str();
+}
 
 void MatchMaker::matchMake()
 {
@@ -219,6 +231,9 @@ void MatchMaker::matchMake()
 
 
 
+	
+
+
 	END_CHRONO_LOG
 
 	/*
@@ -258,6 +273,10 @@ void MatchMaker::split()
 {
 
 
+	for (size_t i = m_competitors.size()/2; i < m_competitors.size(); i++) {
+		delete m_competitors[i].first;
+	}
+
 	m_competitors.erase(m_competitors.begin()+ m_competitors.size()/2, m_competitors.end());
 
 }
@@ -270,7 +289,8 @@ void MatchMaker::regenerate()
 
 	size_t initialCompetitorsSize = m_competitors.size();
 
-	for (size_t i = 0; i < initialCompetitorsSize; i++)
+	
+	for (size_t i = 0; i < initialCompetitorsSize-1; i++)
 	{
 
 		m_competitors[i].second = 0;
@@ -284,16 +304,25 @@ void MatchMaker::regenerate()
 		m_competitors.push_back(std::make_pair(newNN,0));
 
 	}
+
+	NeuralNetwork* newNN;
+
+	newNN = new NeuralNetwork(m_top,m_initialRandStrat);
+
+	m_competitors.push_back(std::make_pair(newNN,0));
 	
 }
 
-std::string MatchMaker::serializeMatchMaker() const
+std::stringstream *MatchMaker::serializeMatchMaker() const
 {
-	std::stringstream ss;
+	std::stringstream *ss = new std::stringstream;
 	for (auto nn : m_competitors)
 	{
-		ss << nn.first->serialize() << " *** ";
+
+		(*ss) << nn.first->serialize() << " *** ";
 	}
+
+	return ss;
 }
 
 MatchMaker::~MatchMaker()

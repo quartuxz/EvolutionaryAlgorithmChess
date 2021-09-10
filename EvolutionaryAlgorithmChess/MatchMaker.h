@@ -4,6 +4,7 @@
 #include <tuple>
 #include <thread>
 #include <queue>
+#include <sstream>
 
 
 
@@ -21,9 +22,16 @@ private:
 
 	size_t m_maxThreads = 4;
 	size_t m_initialNNs;
+
+	Topology m_top;
+	randomizationStrategy m_initialRandStrat;
+
 public:
 
 	MatchMaker(size_t initialNNs, Topology top = {834,416,208,104,52,26,13,4,2,1});
+
+
+	std::string getScoresStrings()const noexcept;
 
 	void matchMake();
 
@@ -35,7 +43,7 @@ public:
 
 	void regenerate();
 	
-	std::string serializeMatchMaker()const;
+	std::stringstream *serializeMatchMaker()const;
 
 	~MatchMaker();
 

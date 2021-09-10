@@ -13,21 +13,32 @@ int main()
 
 
     //20 generations are simulated
-    for (size_t i = 0; i < 20; i++) {
-        std::stringstream ss;
-        mm.matchMake();
-        mm.sortNNs();
-        mm.split();
-        mm.regenerate();
+    for (size_t i = 0; i < 1; i++) {
 
+
+        mm.matchMake();
+        std::cout << mm.getScoresStrings() << std::endl;
+        mm.sortNNs();
+        std::cout << mm.getScoresStrings() << std::endl;
+        mm.split();
+        std::cout << mm.getScoresStrings() << std::endl;
+        mm.regenerate();
+        std::cout << mm.getScoresStrings() << std::endl;
+
+
+        std::stringstream ss;
         ss << "generation_" << i << "_save.txt";
 
         std::ofstream myfile;
-        myfile.open(ss.str());
-
-        myfile << mm.serializeMatchMaker();
+        myfile.open(ss.str(), std::ios::trunc);
+        std::stringstream* ssOut = mm.serializeMatchMaker();
+        myfile << ssOut->str() << std::endl;
         myfile.close();
+        delete ssOut;
     }
+
+    mm.matchMake();
+    mm.sortNNs();
 
     TextUIChess uiChess(mm.getBest(),player::white);
     while (true) {
