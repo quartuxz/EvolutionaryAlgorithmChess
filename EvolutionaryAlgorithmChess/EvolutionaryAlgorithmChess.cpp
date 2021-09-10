@@ -13,7 +13,7 @@ int main()
 
 
     //20 generations are simulated
-    for (size_t i = 0; i < 1; i++) {
+    for (size_t i = 0; i < 20; i++) {
 
 
         mm.matchMake();
