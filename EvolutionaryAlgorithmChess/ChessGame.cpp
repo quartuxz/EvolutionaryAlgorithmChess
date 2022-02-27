@@ -434,7 +434,7 @@ std::vector<boardAndPreviousMove> getKingMoves(board brd, boardCoords coords, pl
     return moves;
 }
 
-std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const boardAndPreviousMove& brdAndMove, player whoToPlay)
+std::vector<boardAndPreviousMove> ChessGame::m_getPossibleMovesForBoard(const boardAndPreviousMove& brdAndMove, player whoToPlay)const
 {
     //calculate all posible boards
 
@@ -546,7 +546,7 @@ ChessGame::ChessGame()
 }
 
 
-bool ChessGame::m_checkWouldCaptureKing(const boardAndPreviousMove &brd)
+bool ChessGame::m_checkWouldCaptureKing(const boardAndPreviousMove &brd)const
 {
     auto boardsAndMove = m_getPossibleMovesForBoard(brd, flipColor(m_whoToPlay));
     for (auto x : boardsAndMove) {
@@ -571,7 +571,7 @@ bool ChessGame::m_checkWouldCaptureKing(const boardAndPreviousMove &brd)
 }
 
 
-std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards(gameCondition *condition)
+std::vector<boardAndPreviousMove> ChessGame::getPossibleBoards(gameCondition *condition)const
 {
 
     auto allMoves = m_getPossibleMovesForBoard(boardAndPreviousMove{m_current,m_moves.back()}, m_whoToPlay);
@@ -735,7 +735,7 @@ board flipBoard(const board& brd)
     return tempBoard;
 }
 
-//we must provide the same numeric representation regardless of who asks for it. As if colors did not matter and we only needed to know who is friendly and enemy and where is our side of the board.
+//we must provide the same numeric representation regardless of who asks for it. As if colors did not matter and we only needed to know who is friendly and enemy on our side of the board.
 std::vector<double> getNumericRepresentationOfBoard(board brd, player whoToPlay)
 {
 

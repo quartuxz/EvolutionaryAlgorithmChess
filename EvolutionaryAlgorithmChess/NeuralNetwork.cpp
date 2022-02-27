@@ -102,13 +102,16 @@ NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrat
 	m_generationStrategy(generationStrategy),
 	m_activationFunction(activationFunction)
 {
+	//we ccreate the layers
 	for (size_t i = 0; i < top.size(); i++)
 	{
+		//we populate the layers
 		NeuronLayer layer;
 		for (size_t o = 0; o < top[i]; o++) {
 
 			Neuron* neuron = new Neuron(activationFunction);
 			layer.push_back(neuron);
+			//if its not the input layer we add synapse connections the the previous layer.
 			if (i != 0) {
 				for (auto lastNeuron : m_allLayers[i-1]) {
 					//std::cout << generateRandomNumber(generationStrategy.individual) << std::endl;
@@ -132,6 +135,78 @@ NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrat
 	}
 
 
+}
+
+
+Topology getTopology(std::string str) {
+	std::string currentNumber;
+
+	Topology retval;
+
+	int line = 0;
+
+	for (char current : str) {
+		if (current == '\n') {
+			break;
+		}
+		if (current == ' ') {
+			retval.push_back(std::atoi(currentNumber.c_str()));
+			continue;
+		}
+		else {
+			currentNumber.push_back(current);
+		}
+		
+	}
+	return retval;
+}
+
+NeuralNetwork::NeuralNetwork(const std::string& str) :
+	NeuralNetwork(getTopology(str), randomizationStrategy())
+{
+	std::string currentNumber;
+	
+	Topology retval;
+
+	//line of the string being read
+	unsigned int line = 0;
+
+	//orienting indexes for creating the NN with the corresponding values as read.
+	unsigned int layerN = 0, neuronN = 0, synapseN = 0;
+
+	for (char current : str) {
+		//the first line was already read for topology information.
+		if (current == '\n') {
+			if (line >= 1) {
+				break;
+			}
+			line++;
+			continue;
+		}
+		if (line == 0) {
+			continue;
+		}
+
+
+		if (current == ' ') {
+			m_allLayers[layerN][neuronN]->m_synapses[synapseN].first = std::atof(currentNumber.c_str());
+			currentNumber = "";
+			synapseN++;
+			continue;
+		}
+		else if (current == '/') {
+			neuronN++;
+			synapseN = 0;
+		}
+		else if (current == ',') {
+			layerN++;
+			neuronN = 0;
+		}
+		else {
+			currentNumber.push_back(current);
+		}
+
+	}
 }
 
 void NeuralNetwork::addRandomWeights(const randomizationStrategy& randStrat)
@@ -211,7 +286,11 @@ NeuralNetwork::NeuralNetwork(const NeuralNetwork& other):
 std::string NeuralNetwork::serialize()const
 {
 	std::stringstream ss;
-
+	for (auto x : m_top)
+	{
+		ss << x << " ";
+	}
+	ss << std::endl;
 	for (auto layer : m_allLayers)
 	{
 		for (auto neuron : layer) {
@@ -219,20 +298,27 @@ std::string NeuralNetwork::serialize()const
 			for (auto syn : synapses) {
 				ss << syn << " ";
 			}
-			ss << "/ ";
+			ss << "/";
 		}
-		ss << std::endl;
+		ss << ",";
 	}
-
 	return ss.str();
+}
+
+void NeuralNetwork::deserialize(std::string str) {
+
 }
 
 NeuralNetwork::~NeuralNetwork()
 {
+	if (deserializeNN != nullptr) {
+		delete deserializeNN;
+	}
 	for (auto lay : m_allLayers) {
 		for (auto neur : lay)
 		{
 			delete neur;
+			
 		}
 	}
 }

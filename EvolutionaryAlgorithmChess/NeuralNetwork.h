@@ -38,7 +38,7 @@ private:
 
 
 public:
-
+	friend class NeuralNetwork;
 
 	void addRandomWeights(const randomizationStrategy &randStrat)const noexcept;
 
@@ -83,6 +83,7 @@ private:
 
 	mutable std::mutex m_lock;
 
+	NeuralNetwork *deserializeNN = nullptr;
 
 	Topology m_top;
 	randomizationStrategy m_generationStrategy;
@@ -90,6 +91,7 @@ private:
 public:
 
 	NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction = [](double in) {return 1 / (1 + exp(-in)); });
+	NeuralNetwork(const std::string& str);
 
 	void addRandomWeights(const randomizationStrategy &randStrat);
 
@@ -100,6 +102,7 @@ public:
 
 
 	std::string serialize()const;
+	void deserialize(std::string str);
 
 	~NeuralNetwork();
 

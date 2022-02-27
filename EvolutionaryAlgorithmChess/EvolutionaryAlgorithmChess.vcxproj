@@ -148,6 +148,7 @@
     <ClCompile Include="MatchMaker.cpp" />
     <ClCompile Include="NeuralNetwork.cpp" />
     <ClCompile Include="NeuralNetworkTests.cpp" />
+    <ClCompile Include="NNManager.cpp" />
     <ClCompile Include="TextUIChess.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
     <ClInclude Include="MatchMaker.h" />
     <ClInclude Include="NeuralNetwork.h" />
     <ClInclude Include="NeuralNetworkTests.h" />
+    <ClInclude Include="NNManager.h" />
     <ClInclude Include="TextUIChess.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

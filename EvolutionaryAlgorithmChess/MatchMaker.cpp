@@ -164,6 +164,7 @@ void MatchMaker::matchMake()
 
 	std::mutex matchesLock;
 
+	//matches are made, black is first and second is white, care is taken to not match NNs against themselves.
 	for (size_t i = 0; i < m_initialNNs; i++)
 	{
 		for (size_t o = i; o < m_initialNNs; o++) {
@@ -192,6 +193,8 @@ void MatchMaker::matchMake()
 	std::vector<size_t> alreadySelectedNNsIndices;
 
 
+	//first we order the matches so that the order means every subsequent match is guaranteed to have
+	//different NNs than the most previous amount of matches possible
 	while (!unorderedMatches.empty()) {
 		bool foundOne = false;
 		for (size_t i = 0; i < unorderedMatches.size(); i++) {
@@ -319,7 +322,7 @@ std::stringstream *MatchMaker::serializeMatchMaker() const
 	for (auto nn : m_competitors)
 	{
 
-		(*ss) << nn.first->serialize() << " *** ";
+		(*ss) << nn.first->serialize() << std::endl << std::endl;
 	}
 
 	return ss;

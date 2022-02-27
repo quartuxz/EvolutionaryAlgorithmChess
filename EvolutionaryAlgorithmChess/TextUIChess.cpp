@@ -73,6 +73,13 @@ std::string TextUIChess::getBoardString(board brd, boardDisplayType brdDsp)
 	return finalStr;
 }
 
+gameCondition TextUIChess::getGameCondition() const
+{
+	gameCondition retval;
+	m_game.getPossibleBoards(&retval);
+	return retval;
+}
+
 void TextUIChess::showBoard()
 {
 	std::cout << getBoardString(m_game.getCurrentBoard(), m_brdDsp) << std::endl;
@@ -111,6 +118,4 @@ void TextUIChess::promptMove()
 	if (m_playingAs == player::white) {
 		makeMoveWithNN(&m_game,m_adversary,player::black);
 	}
-
-
 }

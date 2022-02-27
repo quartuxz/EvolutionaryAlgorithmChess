@@ -70,9 +70,9 @@ private:
 	size_t m_movesWithoutCaptureOrPawnMove = 0;
 	bool m_repeatedPosition = false;
 
-	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const boardAndPreviousMove &brd, player whoToPlay);
+	std::vector<boardAndPreviousMove> m_getPossibleMovesForBoard(const boardAndPreviousMove &brd, player whoToPlay)const;
 
-	bool m_checkWouldCaptureKing(const boardAndPreviousMove &brd);
+	bool m_checkWouldCaptureKing(const boardAndPreviousMove &brd)const;
 
 public:
 
@@ -87,7 +87,8 @@ public:
 
 	ChessGame();
 
-	std::vector<boardAndPreviousMove> getPossibleBoards(gameCondition *condition = nullptr);
+	//returns all possible moves for current board and player, optionally pass gameCondition pointer to know what condition is shown.
+	std::vector<boardAndPreviousMove> getPossibleBoards(gameCondition *condition = nullptr)const;
 	void setNext(boardAndPreviousMove brdMove);
 
 	board getCurrentBoard()const noexcept;

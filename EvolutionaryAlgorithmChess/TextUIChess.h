@@ -25,7 +25,7 @@ public:
 
 	static std::string getBoardString(board brd, boardDisplayType brdDsp);
 
-
+	gameCondition getGameCondition()const;
 	
 	void showBoard();
 
