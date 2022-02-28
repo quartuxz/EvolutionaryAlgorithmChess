@@ -3,6 +3,8 @@
 #include "TextUIChess.h"
 #include <iostream>
 
+bool MatchMaker::verboseOutputAndTracking = false;
+
 
 gameCondition matchTwoNNs(ChessGame* game, NeuralNetwork* black, NeuralNetwork* white)
 {
@@ -60,6 +62,14 @@ MatchMaker::MatchMaker(size_t initialNNs, Topology top):
 
 }
 
+MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs)
+{
+	for (size_t i = 0; i < initialNNs.size(); i++)
+	{
+		m_competitors.push_back(std::make_pair(initialNNs[i],0));
+	}
+}
+
 #include <iostream>
 #include <stack>
 
@@ -90,8 +100,10 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 	gameCondition cond;
 
 	cond = matchTwoNNs(game, blackNN, whiteNN);
-
-	std::cout << std::endl << getGameConditionString(cond);
+	if (MatchMaker::verboseOutputAndTracking) {
+		std::cout << std::endl << getGameConditionString(cond);
+	}
+	
 
 	matchesLock.lock();
 	addScores(m_competitors,blackIndex,whiteIndex,cond);
@@ -150,6 +162,16 @@ std::string MatchMaker::getScoresStrings() const noexcept
 		ss << x.second << std::endl;
 	}
 	return ss.str();
+}
+
+std::vector<NeuralNetwork*> MatchMaker::getNNs()
+{
+	std::vector<NeuralNetwork*> retval;
+	for (auto x : m_competitors)
+	{
+		retval.push_back(x.first);
+	}
+	return retval;
 }
 
 void MatchMaker::matchMake()

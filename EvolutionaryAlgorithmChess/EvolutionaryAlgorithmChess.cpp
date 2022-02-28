@@ -10,20 +10,81 @@
 int main()
 {
     NNManager NNs;
-    int number = 0;
-    while (number != 0) {
+    int optionSelected = 1;
+    while (optionSelected != 0) {
         std::cout << "1.) Play NN." << std::endl;
         std::cout << "2.) Load NN with Name." << std::endl;
         std::cout << "3.) Load NNs with Name+_Y to _Z number." << std::endl;
-        std::cout << "4.) Generate X random NNs with Name_X, if only one is generated then the name is just Name" << std::endl;
-        std::cout << "5.) Do X Training generations simulations among NNs with Name+_Y to _Z number. Overwrite." << std::endl;
-        std::cout << "6.) Save to file NNs with Name+_Y to _Z number." << std::endl;
-        std::cout << "7.) Save to file NN with Name." << std::endl;
-        std::cout << "8.) Save to file NN with." << std::endl;
+        std::cout << "4.) Generate Y-X random NNs with Name_X to Name_Y, if only one is generated then the name is just Name" << std::endl;
+        std::cout << "5.) Do X Training generations simulations among NNs with Name+_Y to _Z number. Provide a naming convention, NNs are saved in order of best to worst, namingConvention+_ordinal." << std::endl;
+        std::cout << "6.) Do X Training generations simulations among NNs selected. Provide a naming convention, NNs are saved in order of best to worst, namingConvention+_ordinal." << std::endl;
+        std::cout << "7.) Save to files NNs with Name+_Y to _Z number." << std::endl;
+        std::cout << "8.) Save to file NN with Name." << std::endl;
+        std::cout << "9.) Save to files selected NNs." << std::endl;
         std::cout << "10) Show NN names." << std::endl;
         std::cout << "0.) Exit." << std::endl;
-        std::cin >> number;
-        switch (number)
+        std::cin >> optionSelected;
+
+        auto doMM = [&](const std::vector<NeuralNetwork*> selectedNNs, const std::string &namingConvention, unsigned int generations) {            
+            MatchMaker mm(selectedNNs);
+            for (size_t i = 0; i < generations; i++) {
+                if (i != 0) {
+                    mm.split();
+                    mm.regenerate();
+                }
+                mm.matchMake();
+                mm.sortNNs();
+
+                std::cout << i << " generations completed!";
+            }
+
+
+            auto result = mm.getNNs();
+
+            for (size_t i = 0; i < result.size(); i++)
+            {
+                std::stringstream finalName;
+                finalName << namingConvention << "_" << i;
+                NNs.addNN(finalName.str(), result[i]);
+            }
+        };
+
+        auto selectNNRange = [&](unsigned int rangeStart, unsigned int rangeEnd, const std::string& name, std::vector<NeuralNetwork*> &selectedNNs ) {            
+            for (size_t i = rangeStart; i <= rangeEnd; i++)
+            {
+                std::stringstream ss;
+                ss << name << "_" << i;
+                selectedNNs.push_back(NNs.getNN(ss.str()));
+            }
+        };
+
+
+        auto selectNNsIndividually = [&](std::vector<NeuralNetwork*> &selectedNNs, std::vector<std::string> *selectedNNsNames = nullptr) {
+
+            std::string option;
+            while (true) {
+                int optionToInt = 0;
+                std::cout << NNs.showNNs();
+                std::cout << "enter option or stop to start simulating: ";
+                std::cin >> option;
+                if (option == "stop") {
+                    break;
+                }
+                optionToInt = std::atoi(option.c_str());
+                selectedNNs.push_back(NNs.getNN(optionToInt));
+                if (selectedNNsNames != nullptr) {
+                    selectedNNsNames->push_back(NNs.getNNName(optionToInt));
+                }
+            }
+        };
+        
+        auto saveNN = [&](const std::string& finalName) {
+            const std::string& serializedNN = NNs.getNN(finalName)->serialize();
+            std::ofstream savefile(finalName, std::ios::out | std::ios::trunc);
+            savefile << serializedNN;
+        };
+
+        switch (optionSelected)
         {
         case 1:
         {
@@ -93,23 +154,107 @@ int main()
         case 4:
         {
             std::string NNName;
-            unsigned int numberOfNNs;
+            unsigned int numberStart = 0;
+            unsigned int numberEnd = 0;
             
             std::cout << "enter NN Name: ";
             std::cin >> NNName;
 
-            std::cout << "enter number of NNs";
-            std::cin >> numberOfNNs;
+            std::cout << "enter first range for NNs numbering: ";
+            std::cin >> numberStart;
 
-            if (number == 0) {
-                NNs.addNN(NNName, NeuralNetwork());
+            std::cout << "enter last range for NNs numbering: ";
+            std::cin >> numberEnd;
+
+            if (numberStart == numberEnd) {
+                NNs.addNN(NNName, new NeuralNetwork(QEAC_DEFAULT_TOPOLOGY,randomizationStrategy()));
             }
-            for (size_t i = 0; i < numberOfNNs; i++)
-            {
-
+            else {
+                for (size_t i = numberStart; i <= numberEnd; i++)
+                {
+                    std::stringstream finalName;
+                    finalName << NNName << "_" << i;
+                    NNs.addNN(finalName.str(), new NeuralNetwork(QEAC_DEFAULT_TOPOLOGY, randomizationStrategy()));
+                }
             }
         }
             break;
+        case 5:
+        {
+            std::vector<NeuralNetwork*> selectedNNs;
+            unsigned int generations, rangeStart, rangeEnd;
+            std::string name, namingConvention, verboseAnswer;
+            std::cout << "enter generations: ";
+            std::cin >> generations;
+            std::cout << std::endl << "enter name: ";
+            std::cin >> name;
+            std::cout << std::endl << "enter start of range: ";
+            std::cin >> rangeStart;
+            std::cout << std::endl << "enter end of range: ";
+            std::cin >> rangeEnd;
+            std::cout << "enter naming convention: ";
+            std::cin >> namingConvention;
+
+            selectNNRange(rangeStart, rangeEnd, name, selectedNNs);
+
+            doMM(selectedNNs,namingConvention,generations);
+        }
+            break;
+        case 6:
+        {
+            std::vector<NeuralNetwork*> selectedNNs;
+            unsigned int generations;
+            std::string name, namingConvention;
+            std::cout << "enter generations: ";
+            std::cin >> generations;
+            std::cout << "enter naming convention: ";
+            std::cin >> namingConvention;
+
+            selectNNsIndividually(selectedNNs);
+
+            doMM(selectedNNs, namingConvention, generations);
+        }
+        break;
+        case 7:
+        {
+            std::vector<NeuralNetwork*> selectedNNs;
+            unsigned int rangeStart, rangeEnd;
+            std::string name;
+            std::cout << std::endl << "enter name: ";
+            std::cin >> name;
+            std::cout << std::endl << "enter start of range: ";
+            std::cin >> rangeStart;
+            std::cout << std::endl << "enter end of range: ";
+            std::cin >> rangeEnd;
+            selectNNRange(rangeStart,rangeEnd,name,selectedNNs);
+            
+            for (size_t i = rangeStart; i <= rangeEnd; i++)
+            {
+                std::stringstream finalName;
+                finalName << name << "_" << i;
+                saveNN(finalName.str());
+            }
+        }
+        break;
+        case 8:
+        {
+            std::string name;
+            std::cout << "enter name: ";
+            std::cin >> name;
+            saveNN(name);
+        }
+        break;
+        case 9:
+        {
+            std::vector<NeuralNetwork*> selectedNNs;
+            std::vector<std::string> selectNNNames;
+            selectNNsIndividually(selectedNNs);
+        }
+        break;
+        case 10:
+        {
+            std::cout << NNs.showNNs() << std::endl;
+        }
         default:
             break;
         }

@@ -8,24 +8,40 @@ NNManager::NNManager()
 void NNManager::addNN(const std::string& name, NeuralNetwork* nn)
 {
 	m_NNs[name] = nn;
+	m_NNVector.push_back(nn);
+	m_names.push_back(name);
 }
 
 void NNManager::addNN(const std::string& name, const std::string& data)
 {
+	
 	m_NNs[name] = new NeuralNetwork(data);
+	m_NNVector.push_back(m_NNs[name]);
+	m_names.push_back(name);
 }
 
-NeuralNetwork* NNManager::getNN(const std::string& name) const
+NeuralNetwork* NNManager::getNN(const std::string& name)
 {
 	return m_NNs.at(name);
+}
+
+NeuralNetwork* NNManager::getNN(unsigned int ordinal)
+{
+	return m_NNVector[ordinal];
+}
+
+std::string NNManager::getNNName(unsigned int ordinal)
+{
+	return m_names[ordinal];
 }
 
 std::string NNManager::showNNs() const
 {
 	std::stringstream ss;
-	for (auto x : m_NNs)
+	unsigned int counter = 0;
+	for (size_t i = 0; i < m_names.size(); i++)
 	{
-		ss << x.first << std::endl;
+		ss << i << ".)" << m_names[i] << std::endl;
 	}
 	return ss.str();
 }

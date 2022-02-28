@@ -108,7 +108,7 @@ void TextUIChess::showMoves()
 void TextUIChess::promptMove()
 {
 	if (m_playingAs == player::black) {
-		makeMoveWithNN(&m_game,m_adversary,player::black);
+		makeMoveWithNN(&m_game, m_adversary, player::black);
 	}
 	int moveNumber = 0;
 	std::cout << "enter move to make: ";

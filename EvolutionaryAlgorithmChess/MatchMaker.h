@@ -6,7 +6,7 @@
 #include <queue>
 #include <sstream>
 
-
+#define QEAC_DEFAULT_TOPOLOGY {834,416,208,104,52,26,13,4,2,1}
 
 gameCondition matchTwoNNs(ChessGame *game, NeuralNetwork* black, NeuralNetwork* white);
 
@@ -26,10 +26,16 @@ private:
 	Topology m_top;
 	randomizationStrategy m_initialRandStrat;
 
+	
+
 public:
 
-	MatchMaker(size_t initialNNs, Topology top = {834,416,208,104,52,26,13,4,2,1});
+	static bool verboseOutputAndTracking;
 
+	MatchMaker(size_t initialNNs, Topology top = QEAC_DEFAULT_TOPOLOGY);
+	MatchMaker(std::vector<NeuralNetwork*> initialNNs);
+
+	std::vector<NeuralNetwork*> getNNs();
 
 	std::string getScoresStrings()const noexcept;
 
