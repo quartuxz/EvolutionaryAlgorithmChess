@@ -65,7 +65,7 @@ int main()
             while (true) {
                 int optionToInt = 0;
                 std::cout << NNs.showNNs();
-                std::cout << "enter option or stop to start simulating: ";
+                std::cout << "enter option or stop: ";
                 std::cin >> option;
                 if (option == "stop") {
                     break;
@@ -79,9 +79,14 @@ int main()
         };
         
         auto saveNN = [&](const std::string& finalName) {
+            
+            std::stringstream ss;
             const std::string& serializedNN = NNs.getNN(finalName)->serialize();
-            std::ofstream savefile(finalName, std::ios::out | std::ios::trunc);
+            ss << finalName << ".txt";
+            std::ofstream savefile(ss.str(), std::ios::trunc);
             savefile << serializedNN;
+            std::cout << serializedNN;
+            savefile.close();
         };
 
         switch (optionSelected)
@@ -100,23 +105,34 @@ int main()
                     std::cout << getGameConditionString(uiChess.getGameCondition()) << std::endl;
                     break;
                 }
-                uiChess.promptMove();
+                if (uiChess.promptMove() != TextUIChess::promptMoveResullt::good) {
+                    break;
+                }
             }
         }
+        break;
         case 2:
         {
+            std::stringstream filename;
             std::string NNname;
             std::cout << "enter NN name to load: ";
             std::cin >> NNname;
+            filename << NNname << ".txt";
 
-
+            std::cout << "one" << std::endl;
             std::ifstream NNFile;
-            NNFile.open(NNname);
+            NNFile.open(filename.str());
             
+            std::cout << "one" << std::endl;
+
             std::stringstream buffer;
             buffer << NNFile.rdbuf();
 
+            std::cout << "one" << std::endl;
+
             NNs.addNN(NNname, buffer.str());
+
+            std::cout << "one" << std::endl;
 
             std::cout << std::endl << NNname << " was read successfully!";
             NNFile.close();
@@ -136,15 +152,19 @@ int main()
 
             for (size_t i = rangeStart; i <= rangeEnd; i++)
             {
-                std::stringstream ss;
-                ss << NNName << "_" << i;
+                std::stringstream finalNNName;
+                finalNNName << NNName << "_" << i;
+
+                std::stringstream filename;
+
+                filename << finalNNName.str() << ".txt";
 
                 std::ifstream NNFile;
-                NNFile.open(NNName);
+                NNFile.open(filename.str());
                 std::stringstream buffer;
                 buffer << NNFile.rdbuf();
 
-                NNs.addNN(ss.str(), buffer.str());
+                NNs.addNN(finalNNName.str(), buffer.str());
 
                 NNFile.close();
             }

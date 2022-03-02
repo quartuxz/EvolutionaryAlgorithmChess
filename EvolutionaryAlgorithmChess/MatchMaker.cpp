@@ -51,18 +51,18 @@ gameCondition makeMoveWithNN(ChessGame* game, NeuralNetwork* nn, player whoIsPla
 
 MatchMaker::MatchMaker(size_t initialNNs, Topology top):
 	m_initialNNs(initialNNs),
-	m_top(top)
+	m_top(top),
+	m_initialRandStrat()
 {
-	randomizationStrategy randStrat;
-	randStrat.individual.maxRangeBeforeTransform = 1;
 	for (size_t i = 0; i < initialNNs; i++) {
-		m_competitors.push_back(std::make_pair(new NeuralNetwork(top,randStrat),0));
+		m_competitors.push_back(std::make_pair(new NeuralNetwork(top, m_initialRandStrat),0));
 	}
-	m_initialRandStrat = randStrat;
 
 }
 
-MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs)
+MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs):
+	m_initialNNs(initialNNs.size()),
+	m_initialRandStrat()
 {
 	for (size_t i = 0; i < initialNNs.size(); i++)
 	{
@@ -310,6 +310,7 @@ void MatchMaker::regenerate()
 {
 	
 	randomizationStrategy strat;
+	//the values changed for mutations range from -x to +x according to the nummber below.
 	strat.individual.maxRangeBeforeTransform = 0.01;
 
 	size_t initialCompetitorsSize = m_competitors.size();
@@ -325,7 +326,7 @@ void MatchMaker::regenerate()
 		newNN = new NeuralNetwork(*m_competitors[i].first);
 
 		
-		newNN->addRandomWeights(strat);
+		newNN->addRandomWeights();
 		m_competitors.push_back(std::make_pair(newNN,0));
 
 	}

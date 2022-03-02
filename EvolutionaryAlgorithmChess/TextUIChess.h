@@ -2,6 +2,8 @@
 #include "ChessGame.h"
 #include "NeuralNetwork.h"
 
+
+
 class TextUIChess
 {
 public:
@@ -10,6 +12,10 @@ public:
 		mayusMinus
 	};
 
+
+	enum class promptMoveResullt {
+		good, gameOver, terminate
+	};
 private:
 	ChessGame m_game;
 	boardDisplayType m_brdDsp;
@@ -29,12 +35,13 @@ public:
 	
 	void showBoard();
 
-
+	
 	static std::string getShowMovesString(const std::vector<boardAndPreviousMove> &moves);
 
 	void showMoves();
 
-	void promptMove();
+	//returns wether the user
+	promptMoveResullt promptMove();
 
 
 };

@@ -7,6 +7,9 @@ NNManager::NNManager()
 
 void NNManager::addNN(const std::string& name, NeuralNetwork* nn)
 {
+	if (m_NNs.find(name) == m_NNs.end()) {
+		throw std::invalid_argument("NN name already present!");
+	}
 	m_NNs[name] = nn;
 	m_NNVector.push_back(nn);
 	m_names.push_back(name);
@@ -14,7 +17,9 @@ void NNManager::addNN(const std::string& name, NeuralNetwork* nn)
 
 void NNManager::addNN(const std::string& name, const std::string& data)
 {
-	
+	if (m_NNs.find(name) == m_NNs.end()) {
+		throw std::invalid_argument("NN name already present!");
+	}
 	m_NNs[name] = new NeuralNetwork(data);
 	m_NNVector.push_back(m_NNs[name]);
 	m_names.push_back(name);

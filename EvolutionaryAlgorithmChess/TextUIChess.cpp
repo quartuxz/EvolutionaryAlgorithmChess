@@ -105,17 +105,30 @@ void TextUIChess::showMoves()
 	std::cout << getShowMovesString(m_game.getPossibleBoards()) << std::endl;
 }
 
-void TextUIChess::promptMove()
+TextUIChess::promptMoveResullt TextUIChess::promptMove()
 {
 	if (m_playingAs == player::black) {
 		makeMoveWithNN(&m_game, m_adversary, player::black);
 	}
 	int moveNumber = 0;
-	std::cout << "enter move to make: ";
+	std::cout << "enter move to make(-1 to terminate): ";
 	std::cin >> moveNumber;
+	
+	const std::vector<boardAndPreviousMove> &possibleMoves = m_game.getPossibleBoards();
+	
 
-	m_game.setNext(m_game.getPossibleBoards()[moveNumber]);
+	while(moveNumber >= possibleMoves.size() || moveNumber <= -1 ) {
+		if (moveNumber == -1) {
+			return promptMoveResullt::terminate;
+		}
+		std::cout << "move invalid, reenter move to make(-1 to terminate): ";
+		std::cin >> moveNumber;
+	}
+
+	m_game.setNext(possibleMoves[moveNumber]);
 	if (m_playingAs == player::white) {
 		makeMoveWithNN(&m_game,m_adversary,player::black);
 	}
+
+	return promptMoveResullt::good;
 }

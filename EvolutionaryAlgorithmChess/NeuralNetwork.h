@@ -11,11 +11,14 @@ struct randomizationStrategy {
 	static std::default_random_engine engine;
 	static void seedEngine();
 
+	double initialRandomRange = 1.0f;
+
+	//for mutations
 	struct tactic {
 		enum tacticType {
 			porcentual, absolute
 		}ttype = tacticType::absolute;
-		double maxRangeBeforeTransform;
+		double maxRangeBeforeTransform = 0.001f;
 		//the default transform is the identity function
 		doubleToDoubleFunc transform = [](double in) {return in; };
 	}individual;
@@ -86,14 +89,14 @@ private:
 	NeuralNetwork *deserializeNN = nullptr;
 
 	Topology m_top;
-	randomizationStrategy m_generationStrategy;
+	randomizationStrategy m_randStrat;
 	doubleToDoubleFunc m_activationFunction;
 public:
 
-	NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction = [](double in) {return 1 / (1 + exp(-in)); });
+	NeuralNetwork(Topology top, const randomizationStrategy &generationStrategy, doubleToDoubleFunc activationFunction = [](double in) {return 1 / (1 + exp(-in)); });
 	NeuralNetwork(const std::string& str);
 
-	void addRandomWeights(const randomizationStrategy &randStrat);
+	void addRandomWeights();
 
 	//sets the input layer to the passed values, pass them through the entire neural net, and get a vector of outputs.
 	std::vector<double> getResult(const std::vector<double> &input)const;

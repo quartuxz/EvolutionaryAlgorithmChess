@@ -97,9 +97,9 @@ void Neuron::setSynapseWeights(std::vector<double> newWeights)
 #include <iostream>
 
 //we build up the neural network
-NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrategy, doubleToDoubleFunc activationFunction):
+NeuralNetwork::NeuralNetwork(Topology top, const randomizationStrategy &generationStrategy, doubleToDoubleFunc activationFunction):
 	m_top(top),
-	m_generationStrategy(generationStrategy),
+	m_randStrat(generationStrategy),
 	m_activationFunction(activationFunction)
 {
 	//we ccreate the layers
@@ -114,8 +114,10 @@ NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrat
 			//if its not the input layer we add synapse connections the the previous layer.
 			if (i != 0) {
 				for (auto lastNeuron : m_allLayers[i-1]) {
+					std::uniform_real_distribution<double> unif(-generationStrategy.initialRandomRange, generationStrategy.initialRandomRange);
+
 					//std::cout << generateRandomNumber(generationStrategy.individual) << std::endl;
-					lastNeuron->addSynapse({ generateRandomNumber(generationStrategy.individual),neuron });
+					lastNeuron->addSynapse({ unif(randomizationStrategy::engine) ,neuron });
 				}
 
 			}
@@ -138,12 +140,10 @@ NeuralNetwork::NeuralNetwork(Topology top, randomizationStrategy generationStrat
 }
 
 
-Topology getTopology(std::string str) {
+Topology getTopology(const std::string& str) {
 	std::string currentNumber;
 
 	Topology retval;
-
-	int line = 0;
 
 	for (char current : str) {
 		if (current == '\n') {
@@ -151,6 +151,8 @@ Topology getTopology(std::string str) {
 		}
 		if (current == ' ') {
 			retval.push_back(std::atoi(currentNumber.c_str()));
+			std::cout << currentNumber << std::endl;
+			currentNumber = "";
 			continue;
 		}
 		else {
@@ -165,14 +167,14 @@ NeuralNetwork::NeuralNetwork(const std::string& str) :
 	NeuralNetwork(getTopology(str), randomizationStrategy())
 {
 	std::string currentNumber;
-	
-	Topology retval;
 
 	//line of the string being read
 	unsigned int line = 0;
 
 	//orienting indexes for creating the NN with the corresponding values as read.
 	unsigned int layerN = 0, neuronN = 0, synapseN = 0;
+
+	std::cout << "two" << std::endl;
 
 	for (char current : str) {
 		//the first line was already read for topology information.
@@ -186,7 +188,7 @@ NeuralNetwork::NeuralNetwork(const std::string& str) :
 		if (line == 0) {
 			continue;
 		}
-
+		
 
 		if (current == ' ') {
 			m_allLayers[layerN][neuronN]->m_synapses[synapseN].first = std::atof(currentNumber.c_str());
@@ -209,13 +211,13 @@ NeuralNetwork::NeuralNetwork(const std::string& str) :
 	}
 }
 
-void NeuralNetwork::addRandomWeights(const randomizationStrategy& randStrat)
+void NeuralNetwork::addRandomWeights()
 {
 	m_lock.lock();
 	for (auto layer : m_allLayers) {
 		for (auto neuron : layer)
 		{
-			neuron->addRandomWeights(randStrat);
+			neuron->addRandomWeights(m_randStrat);
 		}
 	}
 	m_lock.unlock();
@@ -274,7 +276,7 @@ std::vector<double> NeuralNetwork::getResult(const std::vector<double>& input) c
 }
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& other):
-	NeuralNetwork(other.m_top, other.m_generationStrategy, other.m_activationFunction)
+	NeuralNetwork(other.m_top, other.m_randStrat, other.m_activationFunction)
 {
 	for (size_t i = 0; i < m_allLayers.size(); i++) {
 		for (size_t o = 0; o < m_allLayers[i].size(); o++) {
