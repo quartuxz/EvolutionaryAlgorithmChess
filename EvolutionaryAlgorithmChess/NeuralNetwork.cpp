@@ -102,7 +102,7 @@ NeuralNetwork::NeuralNetwork(Topology top, const randomizationStrategy &generati
 	m_randStrat(generationStrategy),
 	m_activationFunction(activationFunction)
 {
-	//we ccreate the layers
+	//we create the layers
 	for (size_t i = 0; i < top.size(); i++)
 	{
 		//we populate the layers
@@ -213,21 +213,23 @@ NeuralNetwork::NeuralNetwork(const std::string& str) :
 
 void NeuralNetwork::addRandomWeights()
 {
-	m_lock.lock();
+	m_resultLock.lock();
+	m_copyLock.lock();
 	for (auto layer : m_allLayers) {
 		for (auto neuron : layer)
 		{
 			neuron->addRandomWeights(m_randStrat);
 		}
 	}
-	m_lock.unlock();
+	m_copyLock.unlock();
+	m_resultLock.unlock();
 }
 
 #include <sstream>
 
 std::vector<double> NeuralNetwork::getResult(const std::vector<double>& input) const
 {
-	std::lock_guard<std::mutex> lockGuard(m_lock);
+	std::lock_guard<std::mutex> lockGuard(m_resultLock);
 
 	if (m_inputLayer.size() != input.size()) {
 		std::stringstream ss;
@@ -278,11 +280,13 @@ std::vector<double> NeuralNetwork::getResult(const std::vector<double>& input) c
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& other):
 	NeuralNetwork(other.m_top, other.m_randStrat, other.m_activationFunction)
 {
+	other.m_copyLock.lock();
 	for (size_t i = 0; i < m_allLayers.size(); i++) {
 		for (size_t o = 0; o < m_allLayers[i].size(); o++) {
 			m_allLayers[i][o]->setSynapseWeights(other.m_allLayers[i][o]->getSynapseWeights());
 		}
 	}
+	other.m_copyLock.unlock();
 }
 
 std::string NeuralNetwork::serialize()const
@@ -313,6 +317,8 @@ void NeuralNetwork::deserialize(std::string str) {
 
 NeuralNetwork::~NeuralNetwork()
 {
+	m_copyLock.lock();
+	m_resultLock.lock();
 	if (deserializeNN != nullptr) {
 		delete deserializeNN;
 	}
@@ -320,9 +326,11 @@ NeuralNetwork::~NeuralNetwork()
 		for (auto neur : lay)
 		{
 			delete neur;
-			
+
 		}
 	}
+	m_copyLock.unlock();
+	m_resultLock.unlock();
 }
 
 void randomizationStrategy::seedEngine()

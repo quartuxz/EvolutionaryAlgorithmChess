@@ -1,9 +1,10 @@
 #include "MatchMaker.h"
 
 #include "TextUIChess.h"
+#include <map>
 #include <iostream>
 
-bool MatchMaker::verboseOutputAndTracking = false;
+bool MatchMaker::verboseOutputAndTracking = true;
 
 
 gameCondition matchTwoNNs(ChessGame* game, NeuralNetwork* black, NeuralNetwork* white)
@@ -60,9 +61,10 @@ MatchMaker::MatchMaker(size_t initialNNs, Topology top):
 
 }
 
-MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs):
+MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs, Topology top):
 	m_initialNNs(initialNNs.size()),
-	m_initialRandStrat()
+	m_initialRandStrat(),
+	m_top(top)
 {
 	for (size_t i = 0; i < initialNNs.size(); i++)
 	{
@@ -88,20 +90,52 @@ void addScores(std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, si
 	}
 }
 
-void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, std::mutex &matchesLock) {
+void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, std::mutex &matchesLock, std::vector<std::mutex> &IndividualLocks) {
 	
 	matchesLock.lock();
 	auto blackNN = m_competitors[blackIndex].first;
 	auto whiteNN = m_competitors[whiteIndex].first;
 	matchesLock.unlock();
-	
+
 	ChessGame* game = new ChessGame();
 
 	gameCondition cond;
 
-	cond = matchTwoNNs(game, blackNN, whiteNN);
+
+	//data races are avoided in a way that requires the least amount of copying neccesary,
+	//each NN has its lock and when it is being used it is copied instead
+	if (IndividualLocks[blackIndex].try_lock()) {
+		//both NNs are available
+		if (IndividualLocks[whiteIndex].try_lock()) {
+			cond = matchTwoNNs(game, blackNN, whiteNN);
+
+			IndividualLocks[whiteIndex].unlock();
+		}
+		//white NN is already being used, needs to be copied to new memory
+		else {
+			auto newWhiteNN = new NeuralNetwork(*whiteNN);
+			cond = matchTwoNNs(game, blackNN, whiteNN);
+			delete newWhiteNN;
+		}
+		IndividualLocks[blackIndex].unlock();
+	}
+	//black NN is already being used, needs to be copied to new memory
+	else {
+		auto newBlackNN = new NeuralNetwork(*blackNN);
+		if (IndividualLocks[whiteIndex].try_lock()) {
+			cond = matchTwoNNs(game, newBlackNN, whiteNN);
+			IndividualLocks[whiteIndex].unlock();
+		}
+		else {
+			auto newWhiteNN = new NeuralNetwork(*whiteNN);
+			cond = matchTwoNNs(game, newBlackNN, newWhiteNN);
+			delete newWhiteNN;
+		}
+		delete newBlackNN;
+	}
+	
 	if (MatchMaker::verboseOutputAndTracking) {
-		std::cout << std::endl << getGameConditionString(cond);
+		std::cout << " " << whiteIndex << " vs " << blackIndex << " (first white second black): " << getGameConditionString(cond) << " ";
 	}
 	
 
@@ -114,7 +148,7 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 }
 
 
-void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vector<std::pair<NeuralNetwork*, size_t>> &m_competitors, std::mutex &matchesLock, size_t i) {
+void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vector<std::pair<NeuralNetwork*, size_t>> &m_competitors, std::mutex &matchesLock, std::vector<std::mutex> &individualLocks) {
 	
 	//std::cout << "-";
 	while (true) {
@@ -139,7 +173,7 @@ void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vect
 
 		//the most computationally intensive operation, takes between 2-5 seconds @4ghz. Possibly can be optimized.
 		gameCondition result;
-		matchMakeThreadedOnce(blackIndex,whiteIndex, m_competitors,matchesLock);
+		matchMakeThreadedOnce(blackIndex,whiteIndex, m_competitors,matchesLock, individualLocks);
 		//std::cout << "lol" << std::endl;
 	}
 }
@@ -151,7 +185,7 @@ void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vect
 #define START_CHRONO auto start = std::chrono::high_resolution_clock::now();
 #define END_CHRONO_LOG auto finish = std::chrono::high_resolution_clock::now();\
 						std::cout << std::endl;\
-						std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << std::endl;
+						std::cout << "time taken in milliseconds: " <<std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << std::endl;
 
 std::string MatchMaker::getScoresStrings() const noexcept
 {
@@ -217,6 +251,8 @@ void MatchMaker::matchMake()
 
 	//first we order the matches so that the order means every subsequent match is guaranteed to have
 	//different NNs than the most previous amount of matches possible
+	//the final arrangement contains the set of the cartesian product of NNIDsBlack x NNIDsWhite and also
+	//NNIDsWhite x NNIDSBlack, in the special order indicated hence.
 	while (!unorderedMatches.empty()) {
 		bool foundOne = false;
 		for (size_t i = 0; i < unorderedMatches.size(); i++) {
@@ -226,6 +262,7 @@ void MatchMaker::matchMake()
 				alreadySelectedNNsIndices.push_back(unorderedMatches[i].second);
 
 				matches.push(unorderedMatches[i]);
+
 
 
 				//std::cout << unorderedMatches[i].first << "; " << unorderedMatches[i].second << std::endl;
@@ -242,11 +279,12 @@ void MatchMaker::matchMake()
 		}
 	}
 
-	START_CHRONO
+	std::vector<std::mutex> individualMutexes(m_competitors.size());
 
+	START_CHRONO
 	for (size_t o = 0; o < m_maxThreads; o++) {
 		//matchMakeThread(matches,m_competitors,matchesLock,competitorsLock);
-		workers.push_back(new std::thread([&, o]() {matchMakeThreaded(matches,m_competitors,matchesLock,o); }));
+		workers.push_back(new std::thread([&, o]() {matchMakeThreaded(matches,m_competitors,matchesLock, individualMutexes); }));
 	}
 
 	for (size_t i = 0; i < workers.size(); i++) {
@@ -310,8 +348,6 @@ void MatchMaker::regenerate()
 {
 	
 	randomizationStrategy strat;
-	//the values changed for mutations range from -x to +x according to the nummber below.
-	strat.individual.maxRangeBeforeTransform = 0.01;
 
 	size_t initialCompetitorsSize = m_competitors.size();
 

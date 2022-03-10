@@ -84,7 +84,8 @@ private:
 	NeuronLayer m_outputLayer;
 	std::vector<NeuronLayer> m_allLayers;
 
-	mutable std::mutex m_lock;
+	mutable std::mutex m_copyLock, m_resultLock;
+	
 
 	NeuralNetwork *deserializeNN = nullptr;
 

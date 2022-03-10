@@ -14,13 +14,14 @@ gameCondition matchTwoNNs(ChessGame *game, NeuralNetwork* black, NeuralNetwork* 
 gameCondition makeMoveWithNN(ChessGame *game, NeuralNetwork *nn, player whoIsPlayed);
 
 
+//TODO: could expand in the fuuture to allow for varying topologies for regeneration of NNs.(NEAT?)
 class MatchMaker
 {
 private:
 	std::vector<std::pair<NeuralNetwork*, size_t>> m_competitors;
 
-
-	size_t m_maxThreads = 4;
+	//8 seems to be the best option for a laptop with a 10th generation mobile multicore i7.
+	size_t m_maxThreads = 8;
 	size_t m_initialNNs;
 
 	Topology m_top;
@@ -32,8 +33,11 @@ public:
 
 	static bool verboseOutputAndTracking;
 
+	//generates x amount of NNs all with the same topology passed
 	MatchMaker(size_t initialNNs, Topology top = QEAC_DEFAULT_TOPOLOGY);
-	MatchMaker(std::vector<NeuralNetwork*> initialNNs);
+	//pass a vector with NNs that can have any topology BUT the same input and output amount of neurons
+	//also pass a default topology to generate new ones in the regeneration phases of matchmaking/simulation.
+	MatchMaker(std::vector<NeuralNetwork*> initialNNs, Topology defaultTop = QEAC_DEFAULT_TOPOLOGY);
 
 	std::vector<NeuralNetwork*> getNNs();
 
@@ -46,7 +50,8 @@ public:
 	NeuralNetwork* getBest();
 
 	void split();
-
+	//creates double-1 amount of new NNs based on the ordered old ones, the one in the last position is not replicated
+	//and instead a whole new one is generated.
 	void regenerate();
 	
 	std::stringstream *serializeMatchMaker()const;

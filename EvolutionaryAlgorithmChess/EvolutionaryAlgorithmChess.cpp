@@ -12,6 +12,12 @@ int main()
     NNManager NNs;
     int optionSelected = 1;
     while (optionSelected != 0) {
+        //TODO:
+        //option to copy NNs
+        //option to change amount of threads simulating NNs
+        //option to change randomization parameters
+        //possibly add NNs with varying topology across generations.
+        //possible to make memory optimizations with pre-allocation and block allocation.(withh all working memory)
         std::cout << "1.) Play NN." << std::endl;
         std::cout << "2.) Load NN with Name." << std::endl;
         std::cout << "3.) Load NNs with Name+_Y to _Z number." << std::endl;
@@ -25,7 +31,18 @@ int main()
         std::cout << "0.) Exit." << std::endl;
         std::cin >> optionSelected;
 
-        auto doMM = [&](const std::vector<NeuralNetwork*> selectedNNs, const std::string &namingConvention, unsigned int generations) {            
+
+        auto saveNN = [&](const std::string& finalName) {
+
+            std::stringstream ss;
+            const std::string& serializedNN = NNs.getNN(finalName)->serialize();
+            ss << finalName << ".txt";
+            std::ofstream savefile(ss.str(), std::ios::trunc);
+            savefile << serializedNN;
+            savefile.close();
+        };
+
+        auto doMM = [&](const std::vector<NeuralNetwork*> selectedNNs, const std::string &namingConvention, unsigned int generations, bool saveAndOverwrite) {            
             MatchMaker mm(selectedNNs);
             for (size_t i = 0; i < generations; i++) {
                 if (i != 0) {
@@ -35,7 +52,17 @@ int main()
                 mm.matchMake();
                 mm.sortNNs();
 
-                std::cout << i << " generations completed!";
+                std::cout << std::endl << i+1 << " generations completed!" << std::endl;
+                auto thisGenRes = mm.getNNs();
+                for (size_t o = 0; o < thisGenRes.size(); o++)
+                {
+                    std::stringstream ss;
+                    const std::string& serializedNN = thisGenRes[o]->serialize();
+                    ss << namingConvention << "_" << o << ".txt";
+                    std::ofstream savefile(ss.str(), std::ios::trunc);
+                    savefile << serializedNN;
+                    savefile.close();
+                }
             }
 
 
@@ -45,7 +72,7 @@ int main()
             {
                 std::stringstream finalName;
                 finalName << namingConvention << "_" << i;
-                NNs.addNN(finalName.str(), result[i]);
+                NNs.addNN(finalName.str(), new NeuralNetwork(*result[i]));
             }
         };
 
@@ -77,18 +104,8 @@ int main()
                 }
             }
         };
-        
-        auto saveNN = [&](const std::string& finalName) {
-            
-            std::stringstream ss;
-            const std::string& serializedNN = NNs.getNN(finalName)->serialize();
-            ss << finalName << ".txt";
-            std::ofstream savefile(ss.str(), std::ios::trunc);
-            savefile << serializedNN;
-            std::cout << serializedNN;
-            savefile.close();
-        };
 
+        try{
         switch (optionSelected)
         {
         case 1:
@@ -203,7 +220,8 @@ int main()
         {
             std::vector<NeuralNetwork*> selectedNNs;
             unsigned int generations, rangeStart, rangeEnd;
-            std::string name, namingConvention, verboseAnswer;
+            std::string name, namingConvention, verboseAnswer, saveAndOverwriteStr;
+            bool saveAndOverwrite = false;
             std::cout << "enter generations: ";
             std::cin >> generations;
             std::cout << std::endl << "enter name: ";
@@ -212,27 +230,31 @@ int main()
             std::cin >> rangeStart;
             std::cout << std::endl << "enter end of range: ";
             std::cin >> rangeEnd;
-            std::cout << "enter naming convention: ";
+            std::cout << std::endl << "enter naming convention: ";
             std::cin >> namingConvention;
+            std::cout << "save and overwrite after every generation(yes/no)? ";
+            std::cin >> saveAndOverwriteStr;
 
             selectNNRange(rangeStart, rangeEnd, name, selectedNNs);
 
-            doMM(selectedNNs,namingConvention,generations);
+            doMM(selectedNNs,namingConvention,generations, saveAndOverwriteStr == "yes" ? true : false);
         }
             break;
         case 6:
         {
             std::vector<NeuralNetwork*> selectedNNs;
             unsigned int generations;
-            std::string name, namingConvention;
+            std::string name, namingConvention, saveAndOverwriteStr;
             std::cout << "enter generations: ";
             std::cin >> generations;
             std::cout << "enter naming convention: ";
             std::cin >> namingConvention;
+            std::cout << "save and overwrite after every generation(yes/no)? ";
+            std::cin >> saveAndOverwriteStr;
 
             selectNNsIndividually(selectedNNs);
 
-            doMM(selectedNNs, namingConvention, generations);
+            doMM(selectedNNs, namingConvention, generations, saveAndOverwriteStr == "yes" ? true : false);
         }
         break;
         case 7:
@@ -277,6 +299,16 @@ int main()
         }
         default:
             break;
+        }
+        }
+        catch (const NNFindError &err) {
+            std::cout << err.what() << std::endl;
+            continue;
+        }
+        catch (const std::exception &err) {
+            std::cout << err.what() << std::endl;
+            system("pause");
+            throw;
         }
     }
 

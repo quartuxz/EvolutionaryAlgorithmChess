@@ -2,6 +2,21 @@
 #include "NeuralNetwork.h"
 #include <map>
 
+class NNFindError : std::exception {
+public:
+	enum errorType {
+		duplicate, notFoundName, notFoundID
+	};
+private:
+	errorType m_et;
+public:
+	NNFindError(errorType et);
+
+	errorType getErrorType()const;
+
+	const char* what()const override;
+};
+
 class NNManager
 {
 private:
