@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdexcept>
 #include <chrono>
+#include <iostream>
 
 
 std::default_random_engine randomizationStrategy::engine = std::default_random_engine(static_cast<long unsigned int>(time(0)));
@@ -12,13 +13,15 @@ double generateRandomNumber(const randomizationStrategy::tactic& tac) {
 	std::uniform_real_distribution<double> unif(-tac.maxRangeBeforeTransform, tac.maxRangeBeforeTransform);
 	
 	
+	//std::cout << tac.transform(unif(randomizationStrategy::engine)) << std::endl;
+
 	return tac.transform(unif(randomizationStrategy::engine));
 }
 
 
-void Neuron::addRandomWeights(const randomizationStrategy& randStrat) const noexcept
+void Neuron::addRandomWeights(const randomizationStrategy& randStrat)
 {
-	for (auto x : m_synapses) {
+	for (auto &x : m_synapses) {
 		x.first += generateRandomNumber(randStrat.individual);
 	}
 }
@@ -173,8 +176,6 @@ NeuralNetwork::NeuralNetwork(const std::string& str) :
 
 	//orienting indexes for creating the NN with the corresponding values as read.
 	unsigned int layerN = 0, neuronN = 0, synapseN = 0;
-
-	std::cout << "two" << std::endl;
 
 	for (char current : str) {
 		//the first line was already read for topology information.
@@ -336,4 +337,12 @@ NeuralNetwork::~NeuralNetwork()
 void randomizationStrategy::seedEngine()
 {
 	engine.seed();
+}
+
+randomizationStrategy::randomizationStrategy()
+{
+}
+
+randomizationStrategy::tactic::tactic()
+{
 }

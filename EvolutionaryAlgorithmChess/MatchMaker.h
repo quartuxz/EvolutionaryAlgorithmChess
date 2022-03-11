@@ -39,6 +39,10 @@ public:
 	//also pass a default topology to generate new ones in the regeneration phases of matchmaking/simulation.
 	MatchMaker(std::vector<NeuralNetwork*> initialNNs, Topology defaultTop = QEAC_DEFAULT_TOPOLOGY);
 
+
+	size_t getMaxThreads()const;
+	void setMaxThreads(size_t maxThreads);
+
 	std::vector<NeuralNetwork*> getNNs();
 
 	std::string getScoresStrings()const noexcept;

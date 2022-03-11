@@ -18,10 +18,13 @@ struct randomizationStrategy {
 		enum tacticType {
 			porcentual, absolute
 		}ttype = tacticType::absolute;
-		double maxRangeBeforeTransform = 0.001f;
+		double maxRangeBeforeTransform = 0.005f;
 		//the default transform is the identity function
 		doubleToDoubleFunc transform = [](double in) {return in; };
-	}individual;
+		tactic();
+	}individual = tactic();
+
+	randomizationStrategy();
 };
 
 
@@ -43,7 +46,7 @@ private:
 public:
 	friend class NeuralNetwork;
 
-	void addRandomWeights(const randomizationStrategy &randStrat)const noexcept;
+	void addRandomWeights(const randomizationStrategy &randStrat);
 
 
 	Neuron(doubleToDoubleFunc activationFunction);
@@ -90,7 +93,7 @@ private:
 	NeuralNetwork *deserializeNN = nullptr;
 
 	Topology m_top;
-	randomizationStrategy m_randStrat;
+	randomizationStrategy m_randStrat = randomizationStrategy();
 	doubleToDoubleFunc m_activationFunction;
 public:
 

@@ -72,6 +72,16 @@ MatchMaker::MatchMaker(std::vector<NeuralNetwork*> initialNNs, Topology top):
 	}
 }
 
+size_t MatchMaker::getMaxThreads() const
+{
+	return m_maxThreads;
+}
+
+void MatchMaker::setMaxThreads(size_t maxThreads)
+{
+	m_maxThreads = maxThreads;
+}
+
 #include <iostream>
 #include <stack>
 
@@ -84,6 +94,7 @@ void addScores(std::vector<std::pair<NeuralNetwork*, size_t>>& m_competitors, si
 	else if (cond == gameCondition::whiteVictory) {
 		m_competitors[whiteIndex].second += 2;
 	}
+	//tie
 	else {
 		m_competitors[blackIndex].second += 1;
 		m_competitors[whiteIndex].second += 1;
@@ -101,7 +112,9 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 
 	gameCondition cond;
 
+	//cond = matchTwoNNs(game, blackNN, whiteNN);
 
+	
 	//data races are avoided in a way that requires the least amount of copying neccesary,
 	//each NN has its lock and when it is being used it is copied instead
 	if (IndividualLocks[blackIndex].try_lock()) {
@@ -133,6 +146,7 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 		}
 		delete newBlackNN;
 	}
+	
 	
 	if (MatchMaker::verboseOutputAndTracking) {
 		std::cout << " " << whiteIndex << " vs " << blackIndex << " (first white second black): " << getGameConditionString(cond) << " ";
@@ -172,9 +186,7 @@ void matchMakeThreaded(std::stack<std::pair<size_t, size_t>>& matches, std::vect
 		//std::cout << " " << i << " " << std::endl;
 
 		//the most computationally intensive operation, takes between 2-5 seconds @4ghz. Possibly can be optimized.
-		gameCondition result;
 		matchMakeThreadedOnce(blackIndex,whiteIndex, m_competitors,matchesLock, individualLocks);
-		//std::cout << "lol" << std::endl;
 	}
 }
 
@@ -324,7 +336,14 @@ bool sortBySec(const std::pair<NeuralNetwork*, size_t> &a, const std::pair<Neura
 
 void MatchMaker::sortNNs()
 {
-	std::sort(m_competitors.begin(), m_competitors.end(), sortBySec);
+	std::stable_sort(m_competitors.begin(), m_competitors.end(), sortBySec);
+	if (verboseOutputAndTracking) {
+		std::cout << "scores: " << std::endl;
+		for (auto x : m_competitors)
+		{
+			std::cout << x.second << std::endl;
+		}
+	}
 }
 
 NeuralNetwork* MatchMaker::getBest()
@@ -346,16 +365,17 @@ void MatchMaker::split()
 
 void MatchMaker::regenerate()
 {
-	
-	randomizationStrategy strat;
+	//resetting all scores
+	for (auto &x : m_competitors) {
+		x.second = 0;
+	}
 
+	//competitors are cut in half during split()
 	size_t initialCompetitorsSize = m_competitors.size();
 
-	
+	//reset all scoes and create new competitors, mutated duplicates from the first ones
 	for (size_t i = 0; i < initialCompetitorsSize-1; i++)
 	{
-
-		m_competitors[i].second = 0;
 		NeuralNetwork* newNN;
 
 
@@ -367,6 +387,7 @@ void MatchMaker::regenerate()
 
 	}
 
+	//generate a a completely random new competitor
 	NeuralNetwork* newNN;
 
 	newNN = new NeuralNetwork(m_top,m_initialRandStrat);

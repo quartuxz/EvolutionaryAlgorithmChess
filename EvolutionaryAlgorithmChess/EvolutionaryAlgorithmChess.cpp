@@ -11,6 +11,7 @@ int main()
 {
     NNManager NNs;
     int optionSelected = 1;
+    size_t usedThreads = 8;
     while (optionSelected != 0) {
         //TODO:
         //option to copy NNs
@@ -28,6 +29,7 @@ int main()
         std::cout << "8.) Save to file NN with Name." << std::endl;
         std::cout << "9.) Save to files selected NNs." << std::endl;
         std::cout << "10) Show NN names." << std::endl;
+        std::cout << "11.) Configue multithreading. " << std::endl;
         std::cout << "0.) Exit." << std::endl;
         std::cin >> optionSelected;
 
@@ -41,9 +43,10 @@ int main()
             savefile << serializedNN;
             savefile.close();
         };
-
+        
         auto doMM = [&](const std::vector<NeuralNetwork*> selectedNNs, const std::string &namingConvention, unsigned int generations, bool saveAndOverwrite) {            
             MatchMaker mm(selectedNNs);
+            mm.setMaxThreads(usedThreads);
             for (size_t i = 0; i < generations; i++) {
                 if (i != 0) {
                     mm.split();
@@ -136,20 +139,18 @@ int main()
             std::cin >> NNname;
             filename << NNname << ".txt";
 
-            std::cout << "one" << std::endl;
+            
             std::ifstream NNFile;
             NNFile.open(filename.str());
             
-            std::cout << "one" << std::endl;
+            
 
             std::stringstream buffer;
             buffer << NNFile.rdbuf();
 
-            std::cout << "one" << std::endl;
+            
 
             NNs.addNN(NNname, buffer.str());
-
-            std::cout << "one" << std::endl;
 
             std::cout << std::endl << NNname << " was read successfully!";
             NNFile.close();
@@ -296,6 +297,20 @@ int main()
         case 10:
         {
             std::cout << NNs.showNNs() << std::endl;
+            break;
+        }
+        case 11:
+        {
+            int newAmount = -1;
+            std::cout << "amount of threads used: " << usedThreads << std::endl;
+            std::cout << "new amount(<= 0 to exit): ";
+            std::cin >> newAmount;
+
+            if (newAmount > 0) {
+                usedThreads = newAmount;
+            }
+            std::cout << std::endl;
+            break;
         }
         default:
             break;
