@@ -18,7 +18,7 @@ struct randomizationStrategy {
 		enum tacticType {
 			porcentual, absolute
 		}ttype = tacticType::absolute;
-		double maxRangeBeforeTransform = 0.005f;
+		double maxRangeBeforeTransform = 0.001f;
 		//the default transform is the identity function
 		doubleToDoubleFunc transform = [](double in) {return in; };
 		tactic();
