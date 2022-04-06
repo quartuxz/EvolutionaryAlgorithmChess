@@ -13,12 +13,18 @@ struct randomizationStrategy {
 
 	double initialRandomRange = 1.0f;
 
+	//how the randomization is distributed
+	enum strategyType {
+		onlyTwo, all
+	}tstrat = onlyTwo;
+
 	//for mutations
 	struct tactic {
+
 		enum tacticType {
 			porcentual, absolute
-		}ttype = tacticType::absolute;
-		double maxRangeBeforeTransform = 0.001f;
+		}ttype = absolute;
+		double maxRangeBeforeTransform = 0.01f;
 		//the default transform is the identity function
 		doubleToDoubleFunc transform = [](double in) {return in; };
 		tactic();
