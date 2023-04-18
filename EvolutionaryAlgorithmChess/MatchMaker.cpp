@@ -148,12 +148,15 @@ void matchMakeThreadedOnce(size_t blackIndex, size_t whiteIndex, std::vector<std
 	}
 	
 	
-	if (MatchMaker::verboseOutputAndTracking) {
-		std::cout << " " << whiteIndex << " vs " << blackIndex << " (first white second black): " << getGameConditionString(cond) << " ";
-	}
+
 	
 
 	matchesLock.lock();
+
+	if (MatchMaker::verboseOutputAndTracking) {
+		std::cout << " " << whiteIndex << " vs " << blackIndex << " (first white second black): " << getGameConditionString(cond) << " " << std::endl;
+	}
+
 	addScores(m_competitors,blackIndex,whiteIndex,cond);
 	matchesLock.unlock();
 
@@ -222,7 +225,9 @@ std::vector<NeuralNetwork*> MatchMaker::getNNs()
 
 void MatchMaker::matchMake()
 {
-
+	if (MatchMaker::verboseOutputAndTracking) {
+		std::cout << "start of matchmake" << std::endl;
+	}
 	using milli = std::chrono::milliseconds;
 
 
@@ -336,6 +341,9 @@ bool sortBySec(const std::pair<NeuralNetwork*, size_t> &a, const std::pair<Neura
 
 void MatchMaker::sortNNs()
 {
+	if (MatchMaker::verboseOutputAndTracking) {
+		std::cout << "start of sort" << std::endl;
+	}
 	std::stable_sort(m_competitors.begin(), m_competitors.end(), sortBySec);
 	if (verboseOutputAndTracking) {
 		std::cout << "scores: " << std::endl;
@@ -353,8 +361,9 @@ NeuralNetwork* MatchMaker::getBest()
 
 void MatchMaker::split()
 {
-
-
+	if(MatchMaker::verboseOutputAndTracking){
+		std::cout << "start of split" << std::endl;
+	}
 	for (size_t i = m_competitors.size()/2; i < m_competitors.size(); i++) {
 		delete m_competitors[i].first;
 	}
@@ -365,6 +374,9 @@ void MatchMaker::split()
 
 void MatchMaker::regenerate()
 {
+	if(MatchMaker::verboseOutputAndTracking){
+		std::cout << "start of regenerate" << std::endl;
+	}
 	//resetting all scores
 	for (auto &x : m_competitors) {
 		x.second = 0;
@@ -381,11 +393,11 @@ void MatchMaker::regenerate()
 
 		newNN = new NeuralNetwork(*m_competitors[i].first);
 
-		
 		newNN->addRandomWeights();
 		m_competitors.push_back(std::make_pair(newNN,0));
 
 	}
+	
 
 	//generate a a completely random new competitor
 	NeuralNetwork* newNN;

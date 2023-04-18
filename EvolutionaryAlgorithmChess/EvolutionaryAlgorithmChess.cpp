@@ -59,14 +59,16 @@ int main()
 
                 std::cout << std::endl << i+1 << " generations completed!" << std::endl;
                 auto thisGenRes = mm.getNNs();
-                for (size_t o = 0; o < thisGenRes.size(); o++)
-                {
-                    std::stringstream ss;
-                    const std::string& serializedNN = thisGenRes[o]->serialize();
-                    ss << namingConvention << "_" << o << ".txt";
-                    std::ofstream savefile(ss.str(), std::ios::trunc);
-                    savefile << serializedNN;
-                    savefile.close();
+                if(saveAndOverwrite){
+                    for (size_t o = 0; o < thisGenRes.size(); o++)
+                    {
+                        std::stringstream ss;
+                        const std::string& serializedNN = thisGenRes[o]->serialize();
+                        ss << namingConvention << "_" << o << ".txt";
+                        std::ofstream savefile(ss.str(), std::ios::trunc);
+                        savefile << serializedNN;
+                        savefile.close();
+                    }
                 }
             }
 
@@ -240,7 +242,7 @@ int main()
 
             selectNNRange(rangeStart, rangeEnd, name, selectedNNs);
 
-            doMM(selectedNNs,namingConvention,generations, saveAndOverwriteStr == "yes" ? true : false);
+            doMM(selectedNNs,namingConvention,generations, (saveAndOverwriteStr == "yes" ? true : false));
         }
             break;
         case 6:

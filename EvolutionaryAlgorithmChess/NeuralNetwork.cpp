@@ -21,32 +21,8 @@ double generateRandomNumber(const randomizationStrategy::tactic& tac) {
 
 void Neuron::addRandomWeights(const randomizationStrategy& randStrat)
 {
-	switch (randStrat.tstrat)
-
-	{
-	case randomizationStrategy::onlyTwo:
-	{
-		int lastSynapse = -1;
-		for (size_t i = 0; i < 2; i++)
-		{
-			std::uniform_int_distribution<unsigned int> unif(0, m_synapses.size());
-			unsigned int thisSynapse = unif(randomizationStrategy::engine);
-			if (thisSynapse = lastSynapse) {
-				i--;
-				continue;
-			}
-			lastSynapse = thisSynapse;
-			m_synapses[thisSynapse].first += generateRandomNumber(randStrat.individual);
-		}
-	}
-		break;
-	case randomizationStrategy::all:
-		for (auto& x : m_synapses) {
-			x.first += generateRandomNumber(randStrat.individual);
-		}
-		break;
-	default:
-		break;
+	for (auto& x : m_synapses) {
+		x.first += generateRandomNumber(randStrat.individual);
 	}
 
 }

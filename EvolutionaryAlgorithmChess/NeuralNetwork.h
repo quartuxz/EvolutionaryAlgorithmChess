@@ -16,7 +16,7 @@ struct randomizationStrategy {
 	//how the randomization is distributed
 	enum strategyType {
 		onlyTwo, all
-	}tstrat = onlyTwo;
+	}tstrat = all;
 
 	//for mutations
 	struct tactic {
